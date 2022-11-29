@@ -1,6 +1,8 @@
 import httpx
 from lxml import html
 
+from rich.console import Console
+
 
 default_headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
@@ -34,6 +36,34 @@ class Youdao:
             'phrases': self._parse_phrases(tree),
             'sentences': self._parse_sentences(tree),
         }
+
+    def print(self, result):
+        console = Console()
+        if len(result.get('hints', [])) > 0:
+            console.print('  [not b]404: not found')
+            for item in result['hints']:
+                console.print('  [green][not b]' + item)
+        if result.get('pronounce', None):
+            console.print()
+            console.print('  [green][not b]' + result['pronounce'].replace('[', '\['))
+        if result.get('explanation', None):
+            console.print()
+            for item in result['explanation']:
+                console.print('  [green][not b]' + item)
+        if result.get('related', None):
+            console.print()
+            for item in result['related']:
+                console.print('  [green][not b]' + item)
+        if result.get('phrases', None):
+            console.print()
+            for item in result['phrases']:
+                phrase, trans = item.rsplit(' ', 1)
+                console.print('  [blue][b]' + phrase + ' [green][not b]' + trans)
+        if result.get('sentences', None):
+            console.print()
+            for item in result['sentences']:
+                console.print('  [green][not b]' + item['orig'])
+                console.print('  [magenta][not b]' + item['trans'])
 
     def _parse_pronounce(self, tree):
         div = tree.cssselect('div.baav')[0]

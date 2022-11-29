@@ -6,6 +6,8 @@ setup(
     author="Tsing Wang",
     author_email="tsing.nix@outlook.com",
     description="Text dictionary for command line",
+    long_description=open('README.md', 'r').read(),
+    long_description_content_type='text/markdown',
     url="https://github.com/tsingwang/tdict",
     packages=find_packages(),
     entry_points={

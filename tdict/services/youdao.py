@@ -25,23 +25,26 @@ class Youdao:
         r = await self.session.get(url, headers=default_headers)
         tree = html.fromstring(r.text)
         if is_chinese(word):
-            return {}
-        hints = self._parse_hints(tree)
-        if len(hints) > 0:
-            return {'hints': hints}
+            return {'trans': self._parse_chinese(tree)}
         return {
+            'hints': self._parse_hints(tree),
             'pronounce': self._parse_pronounce(tree),
             'explanation': self._parse_explanation(tree),
             'related': self._parse_related(tree),
             'phrases': self._parse_phrases(tree),
             'sentences': self._parse_sentences(tree),
+            'trans': self._parse_trans(tree),
         }
 
     def print(self, result):
         console = Console()
-        if len(result.get('hints', [])) > 0:
+        if result.get('hints', None):
             console.print('  [not b]404: not found')
             for item in result['hints']:
+                console.print('  [green][not b]' + item)
+        if result.get('trans', None):
+            console.print()
+            for item in result['trans']:
                 console.print('  [green][not b]' + item)
         if result.get('pronounce', None):
             console.print()
@@ -66,17 +69,19 @@ class Youdao:
                 console.print('  [magenta][not b]' + item['trans'])
 
     def _parse_pronounce(self, tree):
-        div = tree.cssselect('div.baav')[0]
-        return ' '.join(div.text_content().split())
+        query = tree.cssselect('div.baav')
+        if len(query) > 0:
+            return ' '.join(query[0].text_content().split())
+        return ''
 
     def _parse_explanation(self, tree):
         res = []
-        div = tree.cssselect('div.trans-container')[0]
-        for li in div.getchildren()[0].getchildren():
-            res.append(li.text)
-        if len(div.getchildren()) > 1:
-            p = div.getchildren()[1]
-            res.append(' '.join(p.text.split()))
+        query = tree.cssselect('div#phrsListTab')
+        if len(query) > 0:
+            for li in query[0].cssselect('li'):
+                res.append(' '.join(li.text_content().split()))
+            for p in query[0].cssselect('p.additional'):
+                res.append(' '.join(p.text_content().split()))
         return res
 
     def _parse_related(self, tree):
@@ -97,11 +102,12 @@ class Youdao:
 
     def _parse_sentences(self, tree):
         res = []
-        div = tree.cssselect('div#bilingual')[0]
-        for li in div.cssselect('li'):
-            orig = ' '.join(li.getchildren()[0].text_content().split())
-            trans = ' '.join(li.getchildren()[1].text_content().split())
-            res.append({'orig': orig, 'trans': trans})
+        query = tree.cssselect('div#bilingual')
+        if len(query) > 0:
+            for li in query[0].cssselect('li'):
+                orig = ' '.join(li.getchildren()[0].text_content().split())
+                trans = ' '.join(li.getchildren()[1].text_content().split())
+                res.append({'orig': orig, 'trans': trans})
         return res
 
     def _parse_hints(self, tree):
@@ -110,6 +116,23 @@ class Youdao:
         if len(query) > 0:
             for p in query[0].cssselect('p'):
                 res.append(' '.join(p.text_content().split()))
+        return res
+
+    def _parse_trans(self, tree):
+        res = []
+        query = tree.cssselect('div#fanyiToggle')
+        if len(query) > 0:
+            for p in query[0].cssselect('p'):
+                res.append(' '.join(p.text_content().split()))
+        return res
+
+    def _parse_chinese(self, tree):
+        res = []
+        query = tree.cssselect('div#phrsListTab')
+        if len(query) > 0:
+            for p in query[0].cssselect('p.wordGroup'):
+                res.append(' '.join(p.text_content().split()))
+        res += self._parse_trans(tree)
         return res
 
 

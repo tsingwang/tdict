@@ -25,8 +25,9 @@ setup(
         "httpx",
         "lxml",
         "cssselect",
-        "rich",
         "SQLAlchemy",
+        "rich",
+        "textual",
     ],
     classifiers=[
         "License :: OSI Approved :: MIT License",

@@ -1,1 +1,2 @@
 include tdict/VERSION README.md
+include tdict/tdict.css

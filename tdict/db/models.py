@@ -29,5 +29,8 @@ class Word(Base):
     updated_at = Column(DateTime, default=datetime.datetime.now(),
                         onupdate=datetime.datetime.now())
 
+    def to_dict(self):
+        return dict([(k, v) for k, v in self.__dict__.items() if k[0] != '_'])
+
 
 Base.metadata.create_all(engine)

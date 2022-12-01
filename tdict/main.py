@@ -1,6 +1,10 @@
 import argparse
 import asyncio
 
+from rich import print
+from rich.columns import Columns
+
+from tdict.app import TDictApp
 from tdict.db import api as db_api
 from tdict.services import youdao
 
@@ -19,7 +23,8 @@ def main():
     args = parser.parse_args()
 
     if args.list:
-        db_api.list_words()
+        words = ['[green]' + w['word'] for w in db_api.list_words()]
+        print(Columns(words))
         return
 
     if args.add:
@@ -34,7 +39,7 @@ def main():
         asyncio.run(query_word(args.word))
         return
 
-    parser.print_help()
+    TDictApp().run()
 
 
 if __name__ == '__main__':

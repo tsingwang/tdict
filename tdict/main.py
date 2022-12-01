@@ -11,7 +11,7 @@ from tdict.services import youdao
 
 async def query_word(word):
     result = await youdao.query(word)
-    youdao.print(result)
+    print(youdao.format(result))
 
 
 def main():

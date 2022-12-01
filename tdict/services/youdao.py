@@ -1,6 +1,5 @@
 import httpx
 from lxml import html
-from rich import print
 
 
 default_headers = {
@@ -35,37 +34,39 @@ class Youdao:
             'trans': self._parse_trans(tree),
         }
 
-    def print(self, result):
+    def format(self, result):
+        res = []
         if result.get('hints', None):
-            print('  [not b]404: not found')
+            res.append('  [not b]404: not found')
             for item in result['hints']:
-                print('  [green][not b]' + item)
+                res.append('  [green][not b]' + item)
         if result.get('trans', None):
-            print()
+            res.append('')
             for item in result['trans']:
-                print('  [green][not b]' + item)
+                res.append('  [green][not b]' + item)
         if result.get('pronounce', None):
-            print()
-            print('  [green][not b]' + result['pronounce'].replace('[', '\['))
+            res.append('')
+            res.append('  [green][not b]' + result['pronounce'].replace('[', '\['))
         if result.get('explanation', None):
-            print()
+            res.append('')
             for item in result['explanation']:
-                print('  [green][not b]' + item)
+                res.append('  [green][not b]' + item)
         if result.get('related', None):
-            print()
+            res.append('')
             for item in result['related']:
-                print('  [green][not b]' + item)
+                res.append('  [green][not b]' + item)
         if result.get('phrases', None):
-            print()
+            res.append('')
             for item in result['phrases']:
                 phrase, trans = item.rsplit(' ', 1)
-                print('  [blue][b]' + phrase + ' [green][not b]' + trans)
+                res.append('  [blue][b]' + phrase + ' [green][not b]' + trans)
         if result.get('sentences', None):
-            print()
+            res.append('')
             for item in result['sentences']:
-                print('  [green][not b]' + item['orig'])
-                print('  [magenta][not b]' + item['trans'])
-        print()
+                res.append('  [green][not b]' + item['orig'])
+                res.append('  [magenta][not b]' + item['trans'])
+        res.append('')
+        return '\n'.join(res)
 
     def _parse_pronounce(self, tree):
         query = tree.cssselect('div.baav')

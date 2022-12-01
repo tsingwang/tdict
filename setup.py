@@ -1,8 +1,14 @@
+from pathlib import Path
 from setuptools import setup, find_packages
+
+
+def get_version():
+    with open(Path(__file__).parent / 'tdict/VERSION') as version_file:
+        return version_file.read().strip()
 
 setup(
     name="tdict",
-    version="0.1.0",
+    version=get_version(),
     author="Tsing Wang",
     author_email="tsing.nix@outlook.com",
     description="Text dictionary for command line",
@@ -20,6 +26,7 @@ setup(
         "lxml",
         "cssselect",
         "rich",
+        "SQLAlchemy",
     ],
     classifiers=[
         "License :: OSI Approved :: MIT License",

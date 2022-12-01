@@ -20,7 +20,7 @@ class Youdao:
     def __init__(self):
         self.session = httpx.AsyncClient()
 
-    async def fetch_word(self, word):
+    async def query(self, word):
         url = 'https://dict.youdao.com/w/' + word
         r = await self.session.get(url, headers=default_headers)
         tree = html.fromstring(r.text)

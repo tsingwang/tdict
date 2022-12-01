@@ -5,7 +5,12 @@ from tdict.db import api as db_api
 from tdict.services import youdao
 
 
-async def _main():
+async def query_word(word):
+    result = await youdao.query(word)
+    youdao.print(result)
+
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("word", nargs='?', help="The word to query.")
     parser.add_argument("-l", "--list", action="store_true", help="List words.")
@@ -25,12 +30,11 @@ async def _main():
         db_api.delete_word(args.word)
         return
 
-    result = await youdao.fetch_word(args.word)
-    youdao.print(result)
+    if args.word:
+        asyncio.run(query_word(args.word))
+        return
 
-
-def main():
-    asyncio.run(_main())
+    parser.print_help()
 
 
 if __name__ == '__main__':

@@ -1,1 +1,1 @@
-from .youdao import youdao
+from .youdao import Youdao, youdao

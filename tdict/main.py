@@ -6,12 +6,13 @@ from rich.table import Table
 
 from tdict.app import TDictApp
 from tdict.db import api as db_api
-from tdict.services import youdao
+from tdict.services import Youdao
 
 
 async def query_word(word: str) -> None:
-    result = await youdao.query(word)
-    print(youdao.format(result))
+    async with Youdao() as youdao:
+        result = await youdao.query(word)
+        print(youdao.format(result))
 
 
 def print_word_list() -> None:

@@ -18,6 +18,12 @@ class Youdao:
     def __init__(self):
         self.session = httpx.AsyncClient()
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.session.aclose()
+
     async def query(self, word: str) -> dict:
         url = 'https://dict.youdao.com/w/' + word
         r = await self.session.get(url, headers=default_headers)
@@ -34,7 +40,8 @@ class Youdao:
             'trans': self._parse_trans(tree),
         }
 
-    def format(self, result: dict) -> str:
+    @classmethod
+    def format(cls, result: dict) -> str:
         res = []
         if result.get('hints', None):
             res.append('  [not b]404: not found')

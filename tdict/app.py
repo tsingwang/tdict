@@ -46,7 +46,7 @@ class TDictApp(App):
         text-style: bold;
     }
     DetailScreen > Static {
-        border: solid yellow;
+        border: solid #808080;
     }
     """
 

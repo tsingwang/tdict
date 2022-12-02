@@ -19,6 +19,8 @@ def list_today_words() -> Iterator[dict]:
 
 def add_word(word: str) -> None:
     with Session.begin() as session:
+        if session.query(Word).get(word):
+            return
         session.add(Word(word=word))
 
 
@@ -29,7 +31,9 @@ def delete_word(word: str) -> None:
 
 def master_word(word: str) -> None:
     with Session.begin() as session:
-        word = session.query(Word).filter_by(word=word).first()
+        word = session.query(Word).get(word)
+        if word is None:
+            return
         i = min(word.master_count, len(SCHEDULE_DAYS) - 1)
         word.schedule_day = datetime.date.today() + \
                 datetime.timedelta(days=SCHEDULE_DAYS[i])
@@ -39,7 +43,9 @@ def master_word(word: str) -> None:
 
 def forget_word(word: str) -> None:
     with Session.begin() as session:
-        word = session.query(Word).filter_by(word=word).first()
+        word = session.query(Word).get(word)
+        if word is None:
+            return
         word.schedule_day = datetime.date.today()
         word.master_count = 0
         word.forget_count += 1

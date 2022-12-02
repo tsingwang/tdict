@@ -1,41 +1,43 @@
 import datetime
+from typing import Iterator
 
 from .models import Session, Word, SCHEDULE_DAYS
 
 
-def list_words():
+def list_words(order: str = "schedule_day") -> Iterator[dict]:
     with Session.begin() as session:
-        for w in session.query(Word):
+        for w in session.query(Word).order_by(order):
             yield w.to_dict()
 
 
-def list_today_words():
+def list_today_words() -> Iterator[dict]:
     today = datetime.date.today()
     with Session.begin() as session:
         for w in session.query(Word).filter(Word.schedule_day <= today):
             yield w.to_dict()
 
 
-def add_word(word: str):
+def add_word(word: str) -> None:
     with Session.begin() as session:
         session.add(Word(word=word))
 
 
-def delete_word(word: str):
+def delete_word(word: str) -> None:
     with Session.begin() as session:
         session.query(Word).filter_by(word=word).delete()
 
 
-def master_word(word: str):
+def master_word(word: str) -> None:
     with Session.begin() as session:
         word = session.query(Word).filter_by(word=word).first()
         i = min(word.master_count, len(SCHEDULE_DAYS) - 1)
-        word.schedule_day += datetime.timedelta(days=SCHEDULE_DAYS[i])
+        word.schedule_day = datetime.date.today() + \
+                datetime.timedelta(days=SCHEDULE_DAYS[i])
         word.master_count += 1
         word.review_count += 1
 
 
-def forget_word(word: str):
+def forget_word(word: str) -> None:
     with Session.begin() as session:
         word = session.query(Word).filter_by(word=word).first()
         word.schedule_day = datetime.date.today()

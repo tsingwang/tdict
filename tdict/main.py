@@ -2,16 +2,30 @@ import argparse
 import asyncio
 
 from rich import print
-from rich.columns import Columns
+from rich.table import Table
 
 from tdict.app import TDictApp
 from tdict.db import api as db_api
 from tdict.services import youdao
 
 
-async def query_word(word):
+async def query_word(word: str) -> None:
     result = await youdao.query(word)
     print(youdao.format(result))
+
+
+def print_word_list() -> None:
+    table = Table(box=None)
+    table.add_column("SCHEDULE", justify="right")
+    table.add_column("WORD", justify="right", style="green bold")
+    table.add_column("REVIEW", justify="right")
+    table.add_column("MASTER", justify="right")
+    table.add_column("FORGET", justify="right", style="red")
+    for w in db_api.list_words():
+        table.add_row(str(w["schedule_day"]), w["word"],
+                      str(w["review_count"]), str(w["master_count"]),
+                      str(w["forget_count"]),)
+    print(table)
 
 
 def main():
@@ -23,8 +37,7 @@ def main():
     args = parser.parse_args()
 
     if args.list:
-        words = ['[green]' + w['word'] for w in db_api.list_words()]
-        print(Columns(words))
+        print_word_list()
         return
 
     if args.add:

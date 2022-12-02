@@ -7,7 +7,7 @@ default_headers = {
 }
 
 
-def is_chinese(word):
+def is_chinese(word: str) -> bool:
     if '\u4e00' <= word[0] <= '\u9fff':
         return True
     return False
@@ -18,7 +18,7 @@ class Youdao:
     def __init__(self):
         self.session = httpx.AsyncClient()
 
-    async def query(self, word):
+    async def query(self, word: str) -> dict:
         url = 'https://dict.youdao.com/w/' + word
         r = await self.session.get(url, headers=default_headers)
         tree = html.fromstring(r.text)
@@ -34,7 +34,7 @@ class Youdao:
             'trans': self._parse_trans(tree),
         }
 
-    def format(self, result):
+    def format(self, result: dict) -> str:
         res = []
         if result.get('hints', None):
             res.append('  [not b]404: not found')

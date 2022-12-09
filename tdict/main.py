@@ -15,14 +15,14 @@ async def query_word(word: str) -> None:
         print(youdao.format(result))
 
 
-def print_word_list() -> None:
+def print_word_list(offset: int = 0, limit: int = 20) -> None:
     table = Table(box=None)
     table.add_column("SCHEDULE", justify="right")
     table.add_column("WORD", justify="right", style="green bold")
     table.add_column("REVIEW", justify="right")
     table.add_column("MASTER", justify="right")
     table.add_column("FORGET", justify="right", style="red")
-    for w in db_api.list_words():
+    for w in db_api.list_words(offset=offset, limit=limit):
         table.add_row(str(w["schedule_day"]), w["word"],
                       str(w["review_count"]), str(w["master_count"]),
                       str(w["forget_count"]),)
@@ -32,21 +32,25 @@ def print_word_list() -> None:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("word", nargs='?', help="The word to query.")
-    parser.add_argument("-l", "--list", action="store_true", help="List words.")
-    parser.add_argument("-a", "--add", action="store_true", help="Add word.")
-    parser.add_argument("-d", "--delete", action="store_true", help="Delete word.")
+    parser.add_argument("-l", dest="list", nargs='?', const="0,20", help="List words.")
+    parser.add_argument("-a", dest="add", help="Add word.")
+    parser.add_argument("-d", dest="delete", help="Delete word.")
     args = parser.parse_args()
 
     if args.list:
-        print_word_list()
+        try:
+            offset, limit = args.list.split(',')
+        except ValueError:
+            offset, limit = 0, int(args.list)
+        print_word_list(offset=offset, limit=limit)
         return
 
     if args.add:
-        db_api.add_word(args.word)
+        db_api.add_word(args.add)
         return
 
     if args.delete:
-        db_api.delete_word(args.word)
+        db_api.delete_word(args.delete)
         return
 
     if args.word:

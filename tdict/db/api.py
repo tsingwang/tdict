@@ -4,9 +4,10 @@ from typing import Iterator
 from .models import Session, Word, SCHEDULE_DAYS
 
 
-def list_words(order: str = "schedule_day") -> Iterator[dict]:
+def list_words(order: str = "schedule_day",
+               offset: int = 0, limit: int = 20) -> Iterator[dict]:
     with Session.begin() as session:
-        for w in session.query(Word).order_by(order):
+        for w in session.query(Word).order_by(order).offset(offset).limit(limit):
             yield w.to_dict()
 
 

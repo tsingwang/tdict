@@ -35,9 +35,15 @@ def master_word(word: str) -> None:
         word = session.query(Word).get(word)
         if word is None:
             return
+
         i = min(word.master_count, len(SCHEDULE_DAYS) - 1)
         word.schedule_day = datetime.date.today() + \
                 datetime.timedelta(days=SCHEDULE_DAYS[i])
+        # limit 20 words every day, for schedule balance
+        while session.query(Word).\
+                filter_by(schedule_day=word.schedule_day).count() > 20:
+            word.schedule_day += datetime.timedelta(days=1)
+
         word.master_count += 1
         word.review_count += 1
 
@@ -47,6 +53,7 @@ def forget_word(word: str) -> None:
         word = session.query(Word).get(word)
         if word is None:
             return
+
         word.schedule_day = datetime.date.today()
         word.master_count = 0
         word.forget_count += 1

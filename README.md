@@ -13,16 +13,16 @@ Text dictionary for command line.
 
 ```bash
 ➜  ~ td -h
-usage: td [-h] [-l] [-a] [-d] [word]
+usage: td [-h] [-l [LIST]] [-a ADD] [-d DELETE] [word]
 
 positional arguments:
-  word          The word to query.
+  word        The word to query.
 
 options:
-  -h, --help    show this help message and exit
-  -l, --list    List words.
-  -a, --add     Add word.
-  -d, --delete  Delete word.
+  -h, --help  show this help message and exit
+  -l [LIST]   List words.
+  -a ADD      Add word.
+  -d DELETE   Delete word.
 ```
 
 ## Install

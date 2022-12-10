@@ -1,4 +1,4 @@
-import datetime
+from datetime import date, timedelta
 from typing import Iterator
 
 from .models import Session, Word, SCHEDULE_DAYS
@@ -12,17 +12,26 @@ def list_words(order: str = "schedule_day",
 
 
 def list_today_words() -> Iterator[dict]:
-    today = datetime.date.today()
+    today = date.today()
     with Session.begin() as session:
         for w in session.query(Word).filter(Word.schedule_day <= today):
             yield w.to_dict()
+
+
+def _schedule_day(day: date = None) -> date:
+    """Limit 20 words every day, for schedule balance."""
+    day = day if day is not None else date.today()
+    with Session.begin() as session:
+        while session.query(Word).filter_by(schedule_day=day).count() >= 20:
+            day += timedelta(days=1)
+    return day
 
 
 def add_word(word: str) -> None:
     with Session.begin() as session:
         if session.query(Word).get(word):
             return
-        session.add(Word(word=word))
+        session.add(Word(word=word, schedule_day=_schedule_day()))
 
 
 def delete_word(word: str) -> None:
@@ -37,13 +46,8 @@ def master_word(word: str) -> None:
             return
 
         i = min(word.master_count, len(SCHEDULE_DAYS) - 1)
-        word.schedule_day = datetime.date.today() + \
-                datetime.timedelta(days=SCHEDULE_DAYS[i])
-        # limit 20 words every day, for schedule balance
-        while session.query(Word).\
-                filter_by(schedule_day=word.schedule_day).count() > 20:
-            word.schedule_day += datetime.timedelta(days=1)
-
+        word.schedule_day = _schedule_day(
+                date.today() + timedelta(days=SCHEDULE_DAYS[i]))
         word.master_count += 1
         word.review_count += 1
 
@@ -54,7 +58,7 @@ def forget_word(word: str) -> None:
         if word is None:
             return
 
-        word.schedule_day = datetime.date.today()
+        word.schedule_day = _schedule_day()
         word.master_count = 0
         word.forget_count += 1
         word.review_count += 1

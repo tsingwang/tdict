@@ -45,11 +45,11 @@ def master_word(word: str) -> None:
         if word is None:
             return
 
+        word.review_count += 1
+        word.master_count += 1
         i = min(word.master_count, len(SCHEDULE_DAYS) - 1)
         word.schedule_day = _schedule_day(
                 date.today() + timedelta(days=SCHEDULE_DAYS[i]))
-        word.master_count += 1
-        word.review_count += 1
 
 
 def forget_word(word: str) -> None:
@@ -58,7 +58,7 @@ def forget_word(word: str) -> None:
         if word is None:
             return
 
-        word.schedule_day = _schedule_day()
-        word.master_count = 0
-        word.forget_count += 1
         word.review_count += 1
+        word.forget_count += 1
+        word.master_count = 0
+        word.schedule_day = _schedule_day()

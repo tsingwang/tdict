@@ -14,7 +14,7 @@ Session = sessionmaker(bind=engine)
 
 Base = declarative_base()
 
-SCHEDULE_DAYS = [1, 3, 7, 14, 30, 180, 360]
+SCHEDULE_DAYS = [0, 1, 3, 7, 14, 30, 180, 360]
 
 
 class Word(Base):

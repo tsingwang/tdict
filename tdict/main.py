@@ -35,6 +35,7 @@ def main():
     parser.add_argument("-l", dest="list", nargs='?', const="0,20", help="List words.")
     parser.add_argument("-a", dest="add", help="Add word.")
     parser.add_argument("-d", dest="delete", help="Delete word.")
+    parser.add_argument("-s", "--summary", action="store_true", help="Summary by month.")
     args = parser.parse_args()
 
     if args.list:
@@ -43,21 +44,17 @@ def main():
         except ValueError:
             offset, limit = 0, int(args.list)
         print_word_list(offset=offset, limit=limit)
-        return
-
-    if args.add:
+    elif args.add:
         db_api.add_word(args.add)
-        return
-
-    if args.delete:
+    elif args.delete:
         db_api.delete_word(args.delete)
-        return
-
-    if args.word:
+    elif args.word:
         asyncio.run(query_word(args.word))
-        return
-
-    TDictApp().run()
+    elif args.summary:
+        for month, count in db_api.summary():
+            print(f"{month} {count}")
+    else:
+        TDictApp().run()
 
 
 if __name__ == '__main__':

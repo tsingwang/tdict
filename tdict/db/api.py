@@ -1,7 +1,18 @@
 from datetime import date, timedelta
 from typing import Iterator
 
+from sqlalchemy import extract, func
+
 from .models import Session, Word, SCHEDULE_DAYS
+
+
+def summary():
+    """Only support sqlite3 now."""
+    with Session.begin() as session:
+        return session.query(
+            func.strftime('%Y-%m', Word.schedule_day).label("month"),
+            func.count('*').label("count")
+        ).group_by("month").all()
 
 
 def list_words(order: str = "schedule_day",

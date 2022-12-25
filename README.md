@@ -13,17 +13,20 @@ Text dictionary for command line.
 
 ```bash
 ➜  ~ td -h
-usage: td [-h] [-l [LIST]] [-a ADD] [-d DELETE] [word]
+usage: td [-h] [-l [LIST]] [-a ADD] [-d DELETE] [-s] [word]
 
 positional arguments:
-  word        The word to query.
+  word           The word to query.
 
 options:
-  -h, --help  show this help message and exit
-  -l [LIST]   List words.
-  -a ADD      Add word.
-  -d DELETE   Delete word.
+  -h, --help     show this help message and exit
+  -l [LIST]      List words.
+  -a ADD         Add word.
+  -d DELETE      Delete word.
+  -s, --summary  Summary by month.
 ```
+
+If only `td`, it will launch TUI training app.
 
 ## Install
 

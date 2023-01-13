@@ -1,5 +1,6 @@
 from textual import events
 from textual.app import App, ComposeResult
+from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Static, Button
 
@@ -28,12 +29,18 @@ class TDictApp(App):
         grid-gutter: 2;
         padding: 2;
     }
-    #word {
+    .info {
         width: 100%;
         height: 100%;
         column-span: 2;
-        content-align: center bottom;
+        align: center bottom;
+    }
+    #word {
         text-style: bold;
+        text-align: center;
+    }
+    #stats {
+        text-align: center;
     }
     Button {
         width: 100%;
@@ -51,8 +58,10 @@ class TDictApp(App):
     """
 
     def compose(self) -> ComposeResult:
-        yield Static(id="word")
-        yield Button("Yes", id="yes", variant="primary")
+        yield Vertical(Static(id="word"),
+                       Static(id="stats"),
+                       classes="info")
+        yield Button("Yes", id="yes", variant="success")
         yield Button("No", id="no", variant="error")
 
     async def on_mount(self) -> None:
@@ -81,5 +90,8 @@ class TDictApp(App):
             self.word = None
             self.query_one("#word").update("Well done! Hope to see you tomorrow :)")
             return
+        stats = "REVIEW: {}  FORGET: {}".format(self.word["review_count"],
+                                                self.word["forget_count"])
         self.query_one("#word").update(self.word["word"])
+        self.query_one("#stats").update(stats)
         self.explanation = await youdao.query(self.word["word"])

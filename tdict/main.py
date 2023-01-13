@@ -13,6 +13,10 @@ async def query_word(word: str) -> None:
     async with Youdao() as youdao:
         result = await youdao.query(word)
         print(youdao.format(result))
+    w = db_api.query_word(word)
+    if w:
+        print("  REVIEW: {}  FORGET: {}".format(
+            w["review_count"], w["forget_count"]))
 
 
 def print_word_list(offset: int = 0, limit: int = 20) -> None:
@@ -51,8 +55,11 @@ def main():
     elif args.word:
         asyncio.run(query_word(args.word))
     elif args.summary:
+        total = 0
         for month, count in db_api.summary():
             print(f"{month} {count}")
+            total += count
+        print(f" Total: {total}")
     else:
         TDictApp().run()
 

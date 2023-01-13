@@ -29,6 +29,12 @@ def list_today_words() -> Iterator[dict]:
             yield w.to_dict()
 
 
+def query_word(word: str) -> None:
+    with Session.begin() as session:
+        w = session.query(Word).get(word)
+        return w.to_dict() if w else None
+
+
 def _schedule_day(day: date = None) -> date:
     """Limit 20 words every day, for schedule balance."""
     day = day if day is not None else date.today()

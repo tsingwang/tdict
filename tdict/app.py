@@ -89,6 +89,7 @@ class TDictApp(App):
         except StopIteration:
             self.word = None
             self.query_one("#word").update("Well done! Hope to see you tomorrow :)")
+            self.query_one("#stats").update("")
             return
         stats = "REVIEW: {}  FORGET: {}".format(self.word["review_count"],
                                                 self.word["forget_count"])

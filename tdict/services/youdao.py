@@ -22,6 +22,7 @@ class Youdao:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        # Without this, there will be a ResourceWarning
         await self.session.aclose()
 
     async def query(self, word: str) -> dict:

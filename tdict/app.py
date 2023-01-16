@@ -68,10 +68,12 @@ class TDictApp(App):
         self.word_generator = db_api.list_today_words()
         self.word = None
         self.explanation = None
+        self.word_count = 0
         await self.next_word()
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if self.word is None:
+            db_api.append_review_history(self.word_count)
             return self.exit()
         if event.button.id == "yes":
             db_api.master_word(self.word["word"])
@@ -91,8 +93,12 @@ class TDictApp(App):
             self.query_one("#word").update("Well done! Hope to see you tomorrow :)")
             self.query_one("#stats").update("")
             return
+
         stats = "REVIEW: {}  FORGET: {}".format(self.word["review_count"],
                                                 self.word["forget_count"])
         self.query_one("#word").update(self.word["word"])
         self.query_one("#stats").update(stats)
+
         self.explanation = await youdao.query(self.word["word"])
+
+        self.word_count += 1

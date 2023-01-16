@@ -33,4 +33,11 @@ class Word(Base):
         return dict([(k, v) for k, v in self.__dict__.items() if k[0] != '_'])
 
 
+class ReviewHistory(Base):
+    __tablename__ = "review_history"
+
+    date = Column(Date, default=datetime.date.today(), primary_key=True)
+    word_count = Column(Integer, default=0)
+
+
 Base.metadata.create_all(engine)

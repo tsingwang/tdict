@@ -7,7 +7,8 @@ Text dictionary for command line.
 - Show hints if word is not found
 - Support sentence translation
 - Vocabulary book management
-- A simple TUI app for learning word from vocabulary book daily
+- A simple TUI app for learning word daily
+- Word learning history graph, inspired from github person page
 
 ## Usage
 
@@ -23,7 +24,8 @@ options:
   -l [LIST]      List words.
   -a ADD         Add word.
   -d DELETE      Delete word.
-  -s, --summary  Summary by month.
+  -s, --summary  Summary.
+  -y YEAR        Depend on summary.
 ```
 
 If only `td`, it will launch TUI training app.

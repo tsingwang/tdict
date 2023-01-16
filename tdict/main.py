@@ -2,6 +2,7 @@ import argparse
 import asyncio
 
 from rich import print
+from rich.panel import Panel
 from rich.table import Table
 
 from tdict.app import TDictApp
@@ -33,13 +34,46 @@ def print_word_list(offset: int = 0, limit: int = 20) -> None:
     print(table)
 
 
+def show_review_history(year: str) -> None:
+    total_days, reviewed_days, reviewed_words = 0, 0, 0
+    lines = [[] for i in range(7)]
+    i = 0
+    for date, word_count in db_api.list_review_history(year).items():
+        total_days += 1
+        if word_count > 0:
+            reviewed_days += 1
+            reviewed_words += word_count
+            lines[i].append("[r]  [/r]")
+        else:
+            lines[i].append("  ")
+        i = i + 1 if i < 6 else 0
+
+    if year:
+        title = f"Word Review in {year}"
+    else:
+        title = "Word Review in last year"
+    subtitle = "Review Rate: {:.2f}%  Avg words/day: {:.2f}".format(
+            reviewed_days/total_days, reviewed_words/total_days)
+    content = "\n".join(["".join(line) for line in lines])
+    print(Panel.fit(content, title=title, subtitle=subtitle))
+
+
+def show_review_progress() -> None:
+    total = 0
+    for month, count in db_api.query_review_progress():
+        print(f"{month} {count}")
+        total += count
+    print(f" Total: {total}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("word", nargs='?', help="The word to query.")
     parser.add_argument("-l", dest="list", nargs='?', const="0,20", help="List words.")
     parser.add_argument("-a", dest="add", help="Add word.")
     parser.add_argument("-d", dest="delete", help="Delete word.")
-    parser.add_argument("-s", "--summary", action="store_true", help="Summary by month.")
+    parser.add_argument("-s", "--summary", action="store_true", help="Summary.")
+    parser.add_argument("-y", dest="year", type=int, help="Depend on summary.")
     args = parser.parse_args()
 
     if args.list:
@@ -55,11 +89,8 @@ def main():
     elif args.word:
         asyncio.run(query_word(args.word))
     elif args.summary:
-        total = 0
-        for month, count in db_api.summary():
-            print(f"{month} {count}")
-            total += count
-        print(f" Total: {total}")
+        show_review_history(args.year)
+        show_review_progress()
     else:
         TDictApp().run()
 

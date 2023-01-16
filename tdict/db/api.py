@@ -1,18 +1,9 @@
 from datetime import date, timedelta
 from typing import Iterator
 
-from sqlalchemy import extract, func
+from sqlalchemy import func
 
-from .models import Session, Word, SCHEDULE_DAYS
-
-
-def summary():
-    """Only support sqlite3 now."""
-    with Session.begin() as session:
-        return session.query(
-            func.strftime('%Y-%m', Word.schedule_day).label("month"),
-            func.count('*').label("count")
-        ).group_by("month").all()
+from .models import Session, Word, ReviewHistory, SCHEDULE_DAYS
 
 
 def list_words(order: str = "schedule_day",
@@ -79,3 +70,48 @@ def forget_word(word: str) -> None:
         word.forget_count += 1
         word.master_count = 0
         word.schedule_day = _schedule_day()
+
+
+def append_review_history(word_count: int):
+    today = date.today()
+    with Session.begin() as session:
+        history = session.query(ReviewHistory).get(today)
+        if history:
+            history.word_count += word_count
+        else:
+            session.add(ReviewHistory(date=today, word_count=word_count))
+
+
+def list_review_history(year: int = None) -> dict:
+    with Session.begin() as session:
+        if year:
+            first_day = date(year, 1, 1)
+            first_day -= timedelta(days=first_day.weekday())
+            last_day = date(year, 12, 31)
+            last_day += timedelta(days=6 - last_day.weekday())
+        else:
+            last_day = date.today()
+            first_day = last_day - timedelta(days=last_day.weekday() + 52 * 7)
+
+        data = {
+            r.date: r.word_count for r in session.query(ReviewHistory).\
+                    filter(func.DATE(ReviewHistory.date) >= first_day).\
+                    filter(func.DATE(ReviewHistory.date) <= last_day)
+        }
+
+        res = {}
+        while first_day <= last_day:
+            res[first_day] = 0
+            first_day += timedelta(days=1)
+
+        res.update(data)
+        return res
+
+
+def query_review_progress() -> list:
+    """Only support sqlite3 now."""
+    with Session.begin() as session:
+        return session.query(
+            func.strftime('%Y-%m', Word.schedule_day).label("month"),
+            func.count('*').label("count")
+        ).group_by("month").all()

@@ -106,10 +106,10 @@ def list_review_history(year: int = None) -> dict:
         return res
 
 
-def query_review_progress() -> list:
+def get_review_schedule() -> list:
     """Only support sqlite3 now."""
     with Session.begin() as session:
         return session.query(
-            func.strftime('%Y-%m', Word.schedule_day).label("month"),
-            func.count('*').label("count")
+            func.strftime("%Y-%m", Word.schedule_day).label("month"),
+            func.count("*").label("count")
         ).group_by("month").all()

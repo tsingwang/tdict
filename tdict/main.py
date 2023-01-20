@@ -72,12 +72,17 @@ def show_review_history(year: str) -> None:
     print(Panel.fit(content, title=title, subtitle=subtitle))
 
 
-def show_review_progress() -> None:
-    total = 0
-    for month, count in db_api.query_review_progress():
-        print(f"{month} {count}")
-        total += count
-    print(f" Total: {total}")
+def show_review_schedule() -> None:
+    table = Table(title="SCHEDULE", box=None)
+    row = []
+    for month, count in db_api.get_review_schedule():
+        table.add_column(month, justify="right")
+        row.append(count)
+    row.append(sum(row))
+    row = [str(v) for v in row]
+    table.add_column("TOTAL", justify="right", style="green bold")
+    table.add_row(*row)
+    print(table)
 
 
 def main():
@@ -104,7 +109,7 @@ def main():
         asyncio.run(query_word(args.word))
     elif args.summary:
         show_review_history(args.year)
-        show_review_progress()
+        show_review_schedule()
     else:
         TDictApp().run()
 

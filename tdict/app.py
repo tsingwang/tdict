@@ -4,8 +4,8 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Static, Button
 
-from tdict.db import api as db_api
-from tdict.services import youdao
+from .db import api as db_api
+from .services import youdao
 
 
 class DetailScreen(Screen):

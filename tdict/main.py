@@ -5,9 +5,10 @@ from rich import print
 from rich.panel import Panel
 from rich.table import Table
 
-from tdict.app import TDictApp
-from tdict.db import api as db_api
-from tdict.services import Youdao
+from ._loop import loop_first_last
+from .app import TDictApp
+from .db import api as db_api
+from .services import Youdao
 
 
 async def query_word(word: str) -> None:
@@ -37,23 +38,36 @@ def print_word_list(offset: int = 0, limit: int = 20) -> None:
 def show_review_history(year: str) -> None:
     total_days, reviewed_days, reviewed_words = 0, 0, 0
     lines = [[] for i in range(7)]
-    i = 0
-    for date, word_count in db_api.list_review_history(year).items():
+    n = 0
+    for first, last, (date, word_count) in loop_first_last(
+            db_api.list_review_history(year).items()):
+        if first:
+            while n < date.weekday():
+                lines[n].append("~~")
+                n += 1
+
         total_days += 1
         if word_count > 0:
             reviewed_days += 1
             reviewed_words += word_count
-            lines[i].append("[r]  [/r]")
+            lines[n].append("[r]  [/]")
         else:
-            lines[i].append("  ")
-        i = i + 1 if i < 6 else 0
+            lines[n].append("  ")
+
+        if last:
+            while n < 6:
+                n += 1
+                lines[n].append("~~")
+
+        n = n + 1 if n < 6 else 0
 
     if year:
         title = f"Word Review in {year}"
     else:
         title = "Word Review in last year"
-    subtitle = "Review Rate: {:.2f}%  Avg words/day: {:.2f}".format(
-            reviewed_days/total_days, reviewed_words/total_days)
+    subtitle = "Review Rate: {:.2f}% ({}/{})  Avg words/day: {:.2f}".format(
+            reviewed_days/total_days, reviewed_days, total_days,
+            reviewed_words/total_days)
     content = "\n".join(["".join(line) for line in lines])
     print(Panel.fit(content, title=title, subtitle=subtitle))
 

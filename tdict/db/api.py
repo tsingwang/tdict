@@ -86,9 +86,7 @@ def list_review_history(year: int = None) -> dict:
     with Session.begin() as session:
         if year:
             first_day = date(year, 1, 1)
-            first_day -= timedelta(days=first_day.weekday())
             last_day = date(year, 12, 31)
-            last_day += timedelta(days=6 - last_day.weekday())
         else:
             last_day = date.today()
             first_day = last_day - timedelta(days=last_day.weekday() + 52 * 7)

@@ -66,8 +66,8 @@ def show_review_history(year: str) -> None:
     else:
         title = "Word Review in last year"
     subtitle = "Review Rate: {:.2f}% ({}/{})  Avg words/day: {:.2f}".format(
-            reviewed_days/total_days, reviewed_days, total_days,
-            reviewed_words/total_days)
+            100 * reviewed_days / total_days, reviewed_days, total_days,
+            reviewed_words / total_days)
     content = "\n".join(["".join(line) for line in lines])
     print(Panel.fit(content, title=title, subtitle=subtitle))
 

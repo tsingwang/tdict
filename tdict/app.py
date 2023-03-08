@@ -1,3 +1,5 @@
+from datetime import date
+
 from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Vertical
@@ -15,7 +17,12 @@ class DetailScreen(Screen):
         yield Static(youdao.format(self.app.explanation))
 
     async def on_key(self, event: events.Key) -> None:
-        if event.key == "enter":
+        if event.key == "n":
+            # Add a forget option
+            word = db_api.query_word(self.app.word["word"])
+            if word["schedule_day"] > date.today():
+                db_api.forget_word(self.app.word["word"])
+        if event.key in ("enter", "n"):
             await self.app.next_word()
             self.app.pop_screen()
 
@@ -75,6 +82,7 @@ class TDictApp(App):
         if self.word is None:
             db_api.append_review_history(self.word_count)
             return self.exit()
+
         if event.button.id == "yes":
             db_api.master_word(self.word["word"])
         elif event.button.id == "no":
@@ -94,7 +102,7 @@ class TDictApp(App):
             self.query_one("#stats").update("")
             return
 
-        stats = "REVIEW: {}  FORGET: {}".format(self.word["review_count"],
+        stats = "MASTER: {}  FORGET: {}".format(self.word["master_count"],
                                                 self.word["forget_count"])
         self.query_one("#word").update(self.word["word"])
         self.query_one("#stats").update(stats)

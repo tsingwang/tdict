@@ -23,8 +23,8 @@ class DetailScreen(Screen):
             if word["schedule_day"] > date.today():
                 db_api.forget_word(self.app.word["word"])
         if event.key in ("enter", "n"):
-            await self.app.next_word()
             self.app.pop_screen()
+            await self.app.next_word()
 
 
 class TDictApp(App):

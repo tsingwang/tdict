@@ -80,13 +80,14 @@ class TDictApp(App):
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if self.word is None:
-            db_api.append_review_history(self.word_count)
-            return self.exit()
+            return await self.action_quit()
 
         if event.button.id == "yes":
             db_api.master_word(self.word["word"])
         elif event.button.id == "no":
             db_api.forget_word(self.word["word"])
+
+        self.word_count += 1
 
         self.push_screen(DetailScreen())
 
@@ -109,4 +110,7 @@ class TDictApp(App):
 
         self.explanation = await youdao.query(self.word["word"])
 
-        self.word_count += 1
+    async def action_quit(self) -> None:
+        """Override parent App method."""
+        db_api.append_review_history(self.word_count)
+        self.exit()

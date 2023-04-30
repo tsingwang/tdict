@@ -8,11 +8,17 @@ Text dictionary for command line.
 - Support sentence translation
 - Vocabulary book management
 - A simple TUI app for learning word daily
+  - Support work voice, disabled default
 - Word learning history graph, inspired from github person page
 
 ## Usage
 
-```bash
+Environment variables
+```sh
+export TDICT_VOICE_ENABLE=True
+```
+
+```sh
 ➜  ~ td -h
 usage: td [-h] [-l [LIST]] [-a ADD] [-d DELETE] [-s] [word]
 
@@ -32,7 +38,7 @@ If only `td`, it will launch TUI training app.
 
 ## Install
 
-```bash
+```sh
 pip install git+https://github.com/tsingwang/tdict
 # or
 pip install git+ssh://git@github.com/tsingwang/tdict.git
@@ -40,7 +46,7 @@ pip install git+ssh://git@github.com/tsingwang/tdict.git
 
 ## Build
 
-```bash
+```sh
 python setup.py sdist
 pip install dist/<pkg> --user
 ```

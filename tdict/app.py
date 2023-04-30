@@ -16,15 +16,20 @@ class DetailScreen(Screen):
         yield Static(self.app.word["word"], id="title")
         yield Static(youdao.format(self.app.explanation))
 
+    async def on_mount(self) -> None:
+        youdao.play_voice(self.app.word["word"])
+
     async def on_key(self, event: events.Key) -> None:
-        if event.key == "n":
-            # Add a forget option
-            word = db_api.query_word(self.app.word["word"])
-            if word["schedule_day"] > date.today():
-                db_api.forget_word(self.app.word["word"])
         if event.key in ("enter", "n"):
+            if event.key == "n":
+                # Add a forget option
+                word = db_api.query_word(self.app.word["word"])
+                if word["schedule_day"] > date.today():
+                    db_api.forget_word(self.app.word["word"])
             self.app.pop_screen()
             await self.app.next_word()
+        elif event.key == "p":
+            youdao.play_voice(self.app.word["word"])
 
 
 class TDictApp(App):
@@ -108,6 +113,7 @@ class TDictApp(App):
         self.query_one("#word").update(self.word["word"])
         self.query_one("#stats").update(stats)
 
+        youdao.play_voice(self.word["word"])
         self.explanation = await youdao.query(self.word["word"])
 
     async def action_quit(self) -> None:

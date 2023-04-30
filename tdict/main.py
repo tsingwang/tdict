@@ -61,10 +61,7 @@ def show_review_history(year: str) -> None:
 
         n = n + 1 if n < 6 else 0
 
-    if year:
-        title = f"Word Review in {year}"
-    else:
-        title = "Word Review in last year"
+    title = f"Word Review in {year}" if year else "Word Review in last year"
     subtitle = "Review Rate: {:.2f}% ({}/{})  Avg words/day: {:.2f}".format(
             100 * reviewed_days / total_days, reviewed_days, total_days,
             reviewed_words / total_days)

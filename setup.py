@@ -28,6 +28,7 @@ setup(
         "SQLAlchemy",
         "rich",
         "textual",
+        "playsound",
     ],
     classifiers=[
         "License :: OSI Approved :: MIT License",

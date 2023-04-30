@@ -1,5 +1,8 @@
+import os
+
 import httpx
 from lxml import html
+from playsound import playsound
 
 
 default_headers = {
@@ -142,6 +145,12 @@ class Youdao:
                 res.append(' '.join(p.text_content().split()))
         res += self._parse_trans(tree)
         return res
+
+    @classmethod
+    def play_voice(cls, word: str) -> str:
+        if os.environ.get("TDICT_VOICE_ENABLE").lower() in ("true", "1",):
+            url = 'https://dict.youdao.com/dictvoice?audio={}&type=2'.format(word)
+            playsound(url, block=False)
 
 
 youdao = Youdao()

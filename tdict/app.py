@@ -1,13 +1,38 @@
+import os
 from datetime import date
 
 from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Vertical
-from textual.screen import Screen
-from textual.widgets import Static, Button
+from textual.screen import Screen, ModalScreen
+from textual.widgets import Static, Button, Input
 
 from .db import api as db_api
 from .services import youdao
+
+
+class SpellScreen(ModalScreen):
+    BINDINGS = [("escape", "app.pop_screen", "Pop screen")]
+
+    def compose(self) -> ComposeResult:
+        yield Input(placeholder="Try to spell")
+
+    async def on_mount(self) -> None:
+        self.query_one(Input).focus()
+
+    async def on_input_changed(self, message: Input.Changed) -> None:
+        if self.app.word["word"].startswith(message.value):
+            self.query_one(Input).styles.color = "green"
+        else:
+            self.query_one(Input).styles.color = "red"
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+        if self.app.word["word"] == event.value:
+            self.app.pop_screen()
+            self.app.pop_screen()
+            await self.app.next_word()
+        else:
+            self.query_one(Input).styles.color = "red"
 
 
 class DetailScreen(Screen):
@@ -20,12 +45,17 @@ class DetailScreen(Screen):
         youdao.play_voice(self.app.word["word"])
 
     async def on_key(self, event: events.Key) -> None:
-        if event.key in ("enter", "n"):
-            if event.key == "n":
-                # Add a forget option
-                word = db_api.query_word(self.app.word["word"])
-                if word["schedule_day"] > date.today():
-                    db_api.forget_word(self.app.word["word"])
+        if event.key == "enter":
+            if os.environ.get("TDICT_SPELL_ENABLE", "0").lower() in ("true", "1",):
+                self.app.push_screen(SpellScreen())
+            else:
+                self.app.pop_screen()
+                await self.app.next_word()
+        elif event.key == "n":
+            # Add a forget option
+            word = db_api.query_word(self.app.word["word"])
+            if word["schedule_day"] > date.today():
+                db_api.forget_word(self.app.word["word"])
             self.app.pop_screen()
             await self.app.next_word()
         elif event.key == "p":
@@ -66,6 +96,13 @@ class TDictApp(App):
     }
     DetailScreen > Static {
         border: solid #808080;
+    }
+    SpellScreen {
+        align: center middle;
+        text-style: bold;
+    }
+    SpellScreen > Input {
+        color: green;
     }
     """
 

@@ -9,13 +9,15 @@ Text dictionary for command line.
 - Vocabulary book management
 - A simple TUI app for learning word daily
   - Support work voice, disabled default
+  - Support spell check, disabled default
 - Word learning history graph, inspired from github person page
 
 ## Usage
 
-Environment variables
+Optional environment variables
 ```sh
 export TDICT_VOICE_ENABLE=True
+export TDICT_SPELL_ENABLE=True
 ```
 
 ```sh

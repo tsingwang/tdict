@@ -104,6 +104,7 @@ def main():
         db_api.delete_word(args.delete)
     elif args.word:
         asyncio.run(query_word(args.word))
+        Youdao.play_voice(args.word, block=True)
     elif args.summary:
         show_review_history(args.year)
         show_review_schedule()

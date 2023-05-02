@@ -147,10 +147,10 @@ class Youdao:
         return res
 
     @classmethod
-    def play_voice(cls, word: str) -> str:
+    def play_voice(cls, word: str, block: bool = False) -> str:
         if os.environ.get("TDICT_VOICE_ENABLE", "0").lower() in ("true", "1",):
             url = 'https://dict.youdao.com/dictvoice?audio={}&type=2'.format(word)
-            playsound(url, block=False)
+            playsound(url, block)
 
 
 youdao = Youdao()

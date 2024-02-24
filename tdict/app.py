@@ -51,6 +51,10 @@ class DetailScreen(Screen):
             else:
                 self.app.pop_screen()
                 await self.app.next_word()
+        elif event.key == "d":
+            db_api.delete_word(self.app.word["word"])
+            self.app.pop_screen()
+            await self.app.next_word()
         elif event.key == "n":
             # Add a forget option
             word = db_api.query_word(self.app.word["word"])

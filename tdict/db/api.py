@@ -16,7 +16,8 @@ def list_words(order: str = "schedule_day",
 def list_today_words() -> Iterator[dict]:
     today = date.today()
     with Session.begin() as session:
-        for w in session.query(Word).filter(Word.schedule_day <= today):
+        for w in session.query(Word).filter(Word.schedule_day <= today).\
+                order_by("schedule_day"):
             yield w.to_dict()
 
 

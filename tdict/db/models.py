@@ -5,11 +5,10 @@ from sqlalchemy import Column, Integer, String, Date, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from ..profile import profile
 
-workdir = Path.home().joinpath(".tdict")
-workdir.mkdir(exist_ok=True)
-db_path = Path.home().joinpath(".tdict/tdict.sqlite3")
-engine = create_engine("sqlite:///" + str(db_path), echo=False)
+
+engine = create_engine("sqlite:///" + str(profile.db_path), echo=False)
 Session = sessionmaker(bind=engine)
 
 Base = declarative_base()

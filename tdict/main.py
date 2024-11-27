@@ -8,6 +8,7 @@ from rich.table import Table
 from ._loop import loop_first_last
 from .app import TDictApp
 from .db import api as db_api
+from .profile import profile
 from .services import Youdao
 
 
@@ -35,7 +36,7 @@ def print_word_list(offset: int = 0, limit: int = 20) -> None:
     print(table)
 
 
-def show_review_history(year: str) -> None:
+def show_review_history(year: int|None) -> None:
     total_days, reviewed_days, reviewed_words = 0, 0, 0
     lines = [[] for i in range(7)]
     n = 0
@@ -85,6 +86,7 @@ def show_review_schedule() -> None:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("word", nargs='?', help="The word to query.")
+    parser.add_argument("-u", dest="user", help="Use the user account.")
     parser.add_argument("-l", dest="list", nargs='?', const="0,20", help="List words.")
     parser.add_argument("-a", dest="add", help="Add word.")
     parser.add_argument("-d", dest="delete", help="Delete word.")
@@ -92,7 +94,9 @@ def main():
     parser.add_argument("-y", dest="year", type=int, help="Depend on summary.")
     args = parser.parse_args()
 
-    if args.list:
+    if args.user:
+        profile.update('USER', args.user)
+    elif args.list:
         try:
             offset, limit = args.list.split(',')
         except ValueError:

@@ -83,7 +83,7 @@ def append_review_history(word_count: int):
             session.add(ReviewHistory(date=today, word_count=word_count))
 
 
-def list_review_history(year: int = None) -> dict:
+def list_review_history(year: int|None = None) -> dict:
     with Session.begin() as session:
         if year:
             first_day = date(year, 1, 1)

@@ -19,7 +19,8 @@ SCHEDULE_DAYS = [0, 1, 3, 7, 14, 30, 90, 180, 360]
 class Word(Base):
     __tablename__ = "words"
 
-    word = Column(String(64), primary_key=True)
+    word = Column(String(256), primary_key=True)
+    tips = Column(String(1024), default='')     # reserved field
     review_count = Column(Integer, default=0)
     master_count = Column(Integer, default=0)   # Continuous mastery
     forget_count = Column(Integer, default=0)

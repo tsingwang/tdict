@@ -7,6 +7,7 @@ from playsound import playsound
 
 default_headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    "Referer": "https://dict.youdao.com"
 }
 
 
@@ -35,7 +36,9 @@ class Youdao:
         if is_chinese(word):
             return {'trans': self._parse_chinese(tree)}
         return {
+            'word': word,
             'hints': self._parse_hints(tree),
+            'frequency': self._parse_frequency(tree),
             'pronounce': self._parse_pronounce(tree),
             'explanation': self._parse_explanation(tree),
             'related': self._parse_related(tree),
@@ -51,16 +54,17 @@ class Youdao:
             res.append('  [not b]404: not found')
             for item in result['hints']:
                 res.append('  [green][not b]' + item)
-        if result.get('trans', None):
-            res.append('')
-            for item in result['trans']:
-                res.append('  [green][not b]' + item)
         if result.get('pronounce', None):
-            res.append('')
-            res.append('  [green][not b]' + result['pronounce'].replace('[', '\['))
+            if result.get('frequency', None):
+                res.append('  [yellow][b]' + result.get('word') + '  ' + result.get('frequency'))
+            res.append('  [green][not b]' + result['pronounce'])
         if result.get('explanation', None):
             res.append('')
             for item in result['explanation']:
+                res.append('  [green][not b]' + item)
+        if result.get('additional', None):
+            res.append('')
+            for item in result['additional']:
                 res.append('  [green][not b]' + item)
         if result.get('related', None):
             res.append('')
@@ -75,9 +79,22 @@ class Youdao:
             res.append('')
             for item in result['sentences']:
                 res.append('  [green][not b]' + item['orig'])
-                res.append('  [magenta][not b]' + item['trans'])
+                res.append('  [blue][not b]' + item['trans'])
+        if result.get('trans', None):
+            res.append('')
+            for item in result['trans']:
+                res.append('  [green][not b]' + item)
         res.append('')
         return '\n'.join(res)
+
+    def _parse_frequency(self, tree):
+        query = tree.xpath('//span[@title="使用频率"]')
+        res = ''
+        if len(query) > 0:
+            stars = "".join([c for c in query[0].get('class') if c.isdigit()])
+            for i in range(int(stars)):
+                res += ':star:'
+        return res
 
     def _parse_pronounce(self, tree):
         query = tree.cssselect('div.baav')
@@ -91,8 +108,18 @@ class Youdao:
         if len(query) > 0:
             for li in query[0].cssselect('li'):
                 res.append(' '.join(li.text_content().split()))
+        return res
+
+    def _parse_additional(self, tree):
+        res = []
+        query = tree.cssselect('div#phrsListTab')
+        if len(query) > 0:
             for p in query[0].cssselect('p.additional'):
-                res.append(' '.join(p.text_content().split()))
+                s = []
+                lines = [s.strip() for s in p.text_content().split('\n')]
+                for i in range(1, len(lines) - 1, 2):
+                    s.append(lines[i] + ' ' + lines[i+1])
+                res.append('; '.join(s))
         return res
 
     def _parse_related(self, tree):

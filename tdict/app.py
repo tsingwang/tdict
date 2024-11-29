@@ -12,6 +12,7 @@ from .services import youdao
 
 
 class SpellScreen(ModalScreen):
+
     BINDINGS = [("escape", "app.pop_screen", "Pop screen")]
 
     def compose(self) -> ComposeResult:
@@ -21,16 +22,16 @@ class SpellScreen(ModalScreen):
         self.query_one(Input).focus()
 
     async def on_input_changed(self, message: Input.Changed) -> None:
-        if self.app.word["word"].startswith(message.value):
+        if self.app.word["word"].lower().startswith(message.value.lower()):
             self.query_one(Input).styles.color = "green"
         else:
             self.query_one(Input).styles.color = "red"
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
-        if self.app.word["word"] == event.value:
+        if self.app.word["word"].lower() == event.value.lower():
+            db_api.master_word(self.app.word["word"])
             self.app.pop_screen()
-            self.app.pop_screen()
-            await self.app.next_word()
+            self.app.push_screen(DetailScreen())
         else:
             self.query_one(Input).styles.color = "red"
 
@@ -46,11 +47,8 @@ class DetailScreen(Screen):
 
     async def on_key(self, event: events.Key) -> None:
         if event.key == "enter":
-            if os.environ.get("TDICT_SPELL_ENABLE", "0").lower() in ("true", "1",):
-                self.app.push_screen(SpellScreen())
-            else:
-                self.app.pop_screen()
-                await self.app.next_word()
+            self.app.pop_screen()
+            await self.app.next_word()
         elif event.key == "d":
             db_api.delete_word(self.app.word["word"])
             self.app.pop_screen()
@@ -68,47 +66,7 @@ class DetailScreen(Screen):
 
 class TDictApp(App):
 
-    CSS = """
-    Screen {
-        layout: grid;
-        grid-size: 2;
-        grid-gutter: 2;
-        padding: 2;
-    }
-    .info {
-        width: 100%;
-        height: 100%;
-        column-span: 2;
-        align: center bottom;
-    }
-    #word {
-        text-style: bold;
-        text-align: center;
-    }
-    #stats {
-        text-align: center;
-    }
-    Button {
-        width: 100%;
-    }
-    DetailScreen {
-        layout: vertical;
-    }
-    DetailScreen > #title {
-        padding-left: 2;
-        text-style: bold;
-    }
-    DetailScreen > Static {
-        border: solid #808080;
-    }
-    SpellScreen {
-        align: center middle;
-        text-style: bold;
-    }
-    SpellScreen > Input {
-        color: green;
-    }
-    """
+    CSS_PATH = "tdict.tcss"
 
     def compose(self) -> ComposeResult:
         yield Vertical(Static(id="word"),
@@ -124,16 +82,26 @@ class TDictApp(App):
         self.word_count = 0
         await self.next_word()
 
+    async def on_key(self, event: events.Key) -> None:
+        if self.word is not None:
+            if event.key == "d":
+                db_api.delete_word(self.word["word"])
+                await self.next_word()
+            elif event.key == "p":
+                youdao.play_voice(self.word["word"])
+
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if self.word is None:
             return await self.action_quit()
 
         if event.button.id == "yes":
-            db_api.master_word(self.word["word"])
+            if os.environ.get("TDICT_SPELL_ENABLE", "0").lower() in ("true", "1",):
+                self.push_screen(SpellScreen())
+                return
+            else:
+                db_api.master_word(self.word["word"])
         elif event.button.id == "no":
             db_api.forget_word(self.word["word"])
-
-        self.word_count += 1
 
         self.push_screen(DetailScreen())
 
@@ -143,21 +111,27 @@ class TDictApp(App):
     async def next_word(self) -> None:
         try:
             self.word = next(self.word_generator)
+            self.word_count += 1
         except StopIteration:
             self.word = None
             self.query_one("#word").update("Well done! Hope to see you tomorrow :)")
             self.query_one("#stats").update("")
             return
 
+        self.explanation = await youdao.query(self.word["word"])
+        if len(self.explanation.get('explanation', [])) > 0:
+            tips = '\n'.join(self.explanation['explanation'])
+            self.query_one("#word").update('[green]' + tips)
+        else:
+            self.query_one("#word").update(self.word["word"])
+
         stats = "MASTER: {}  FORGET: {}".format(self.word["master_count"],
                                                 self.word["forget_count"])
-        self.query_one("#word").update(self.word["word"])
         self.query_one("#stats").update(stats)
 
         youdao.play_voice(self.word["word"])
-        self.explanation = await youdao.query(self.word["word"])
 
     async def action_quit(self) -> None:
-        """Override parent App method."""
+        """Override parent App method. Ctrl+C can be captured."""
         db_api.append_review_history(self.word_count)
         self.exit()

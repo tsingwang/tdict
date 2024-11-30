@@ -11,6 +11,10 @@ class Profile:
             self.filepath.touch()
 
     @property
+    def current_user(self):
+        return self.read('USER')
+
+    @property
     def db_path(self):
         if self.read('USER'):
             return Path.home().joinpath(".tdict/{}.sqlite3".format(self.read('USER')))

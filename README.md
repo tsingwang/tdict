@@ -14,12 +14,6 @@ Text dictionary for command line.
 
 ## Usage
 
-Optional environment variables
-```sh
-export TDICT_VOICE_ENABLE=True
-export TDICT_SPELL_ENABLE=True
-```
-
 ```sh
 ➜  ~ td -h
 usage: td [-h] [-u USER] [-l [LIST]] [-a ADD] [-d DELETE] [-s] [-y YEAR] [word]

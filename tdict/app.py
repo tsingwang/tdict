@@ -1,19 +1,51 @@
-import os
 from datetime import date
 
-from textual import events
+from textual import events, work
 from textual.app import App, ComposeResult
-from textual.containers import Vertical
+from textual.containers import Vertical, Grid
 from textual.screen import Screen, ModalScreen
-from textual.widgets import Static, Button, Input
+from textual.widgets import Static, Button, Input, Header, Footer
 
 from .db import api as db_api
+from .profile import profile
 from .services import youdao
+
+
+class ExploreScreen(Screen):
+
+    BINDINGS = [("escape", "app.pop_screen", "Pop screen")]
+
+    def compose(self) -> ComposeResult:
+        yield Grid(Input(placeholder="Search", id="search"),
+                   Button("Add", id="add", variant="success"))
+        yield Static(id="result")
+        yield Footer()
+
+    async def on_mount(self) -> None:
+        self.query_one(Input).focus()
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.value:
+            explanation = await youdao.query(event.value)
+            self.query_one("#result").update(youdao.format(explanation))
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        word = self.query_one("#search").value.strip()
+        if not word:
+            return
+        if event.button.id == "add":
+            db_api.add_word(word)
+            self.query_one("#search").value = ""
+            self.query_one("#search").focus()
 
 
 class SpellScreen(ModalScreen):
 
     BINDINGS = [("escape", "app.pop_screen", "Pop screen")]
+
+    def __init__(self, word: str) -> None:
+        super().__init__()
+        self.word = word
 
     def compose(self) -> ComposeResult:
         yield Input(placeholder="Try to spell")
@@ -22,96 +54,92 @@ class SpellScreen(ModalScreen):
         self.query_one(Input).focus()
 
     async def on_input_changed(self, message: Input.Changed) -> None:
-        if self.app.word["word"].lower().startswith(message.value.lower()):
+        if self.word.lower().startswith(message.value.lower()):
             self.query_one(Input).styles.color = "green"
         else:
             self.query_one(Input).styles.color = "red"
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
-        if self.app.word["word"].lower() == event.value.lower():
-            db_api.master_word(self.app.word["word"])
-            self.app.pop_screen()
-            self.app.push_screen(DetailScreen())
+        if self.word.lower() == event.value.lower():
+            self.dismiss(True)
         else:
             self.query_one(Input).styles.color = "red"
 
 
 class DetailScreen(Screen):
 
+    BINDINGS = [
+        ("e", "app.push_screen('explore')", "Explore"),
+        ("d", "delete_word", "Delete"),
+        ("p", "play_voice", "Pronounce"),
+        ("enter", "next_word", "Enter"),
+    ]
+
+    def __init__(self, explanation: dict) -> None:
+        super().__init__()
+        self.explanation = explanation
+
     def compose(self) -> ComposeResult:
-        yield Static(self.app.word["word"], id="title")
-        yield Static(youdao.format(self.app.explanation))
+        yield Static(self.explanation["word"], id="title")
+        yield Static(youdao.format(self.explanation))
+        yield Footer()
 
     async def on_mount(self) -> None:
-        youdao.play_voice(self.app.word["word"])
+        youdao.play_voice(self.explanation["word"])
 
-    async def on_key(self, event: events.Key) -> None:
-        if event.key == "enter":
-            self.app.pop_screen()
-            await self.app.next_word()
-        elif event.key == "d":
-            db_api.delete_word(self.app.word["word"])
-            self.app.pop_screen()
-            await self.app.next_word()
-        elif event.key == "n":
-            # Add a forget option
-            word = db_api.query_word(self.app.word["word"])
-            if word["schedule_day"] > date.today():
-                db_api.forget_word(self.app.word["word"])
-            self.app.pop_screen()
-            await self.app.next_word()
-        elif event.key == "p":
-            youdao.play_voice(self.app.word["word"])
+    async def action_delete_word(self) -> None:
+        db_api.delete_word(self.explanation["word"])
+
+    async def action_play_voice(self) -> None:
+        youdao.play_voice(self.explanation["word"])
+
+    async def action_next_word(self) -> None:
+        self.dismiss(True)
 
 
-class TDictApp(App):
+class MainScreen(Screen):
 
-    CSS_PATH = "tdict.tcss"
+    BINDINGS = [
+        ("e", "app.push_screen('explore')", "Explore"),
+        ("d", "delete_word", "Delete"),
+        ("p", "play_voice", "Pronounce"),
+    ]
 
     def compose(self) -> ComposeResult:
+        yield Header()
         yield Vertical(Static(id="word"),
                        Static(id="stats"),
                        classes="info")
         yield Button("Yes", id="yes", variant="success")
         yield Button("No", id="no", variant="error")
+        yield Footer()
 
     async def on_mount(self) -> None:
         self.word_generator = db_api.list_today_words()
         self.word = None
         self.explanation = None
-        self.word_count = 0
         await self.next_word()
 
-    async def on_key(self, event: events.Key) -> None:
-        if self.word is not None:
-            if event.key == "d":
-                db_api.delete_word(self.word["word"])
-                await self.next_word()
-            elif event.key == "p":
-                youdao.play_voice(self.word["word"])
-
+    @work
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if self.word is None:
-            return await self.action_quit()
+            return await self.app.action_quit()
 
         if event.button.id == "yes":
-            if os.environ.get("TDICT_SPELL_ENABLE", "0").lower() in ("true", "1",):
-                self.push_screen(SpellScreen())
-                return
-            else:
+            if await self.app.push_screen_wait(SpellScreen(self.word["word"])):
                 db_api.master_word(self.word["word"])
+            else:
+                return
         elif event.button.id == "no":
             db_api.forget_word(self.word["word"])
 
-        self.push_screen(DetailScreen())
-
-        # NOTE: push_screen can not block, so move next_word action to DetailScreen
-        # await self.next_word()
+        await self.app.push_screen_wait(DetailScreen(self.explanation))
+        await self.next_word()
 
     async def next_word(self) -> None:
         try:
             self.word = next(self.word_generator)
-            self.word_count += 1
+            self.app.word_count += 1
         except StopIteration:
             self.word = None
             self.query_one("#word").update("Well done! Hope to see you tomorrow :)")
@@ -122,6 +150,8 @@ class TDictApp(App):
         if len(self.explanation.get('explanation', [])) > 0:
             tips = '\n'.join(self.explanation['explanation'])
             self.query_one("#word").update('[green]' + tips)
+        elif len(self.explanation.get('trans', [])) > 1:
+            self.query_one("#word").update('[green]' + self.explanation['trans'][1])
         else:
             self.query_one("#word").update(self.word["word"])
 
@@ -130,6 +160,34 @@ class TDictApp(App):
         self.query_one("#stats").update(stats)
 
         youdao.play_voice(self.word["word"])
+
+    async def action_delete_word(self) -> None:
+        if self.word is not None:
+            db_api.delete_word(self.word["word"])
+            await self.next_word()
+
+    async def action_play_voice(self) -> None:
+        if self.word is not None:
+            youdao.play_voice(self.word["word"])
+
+
+class TDictApp(App):
+
+    TITLE = "TDict ({})".format(profile.current_user)
+
+    CSS_PATH = "tdict.tcss"
+
+    SCREENS = {
+        "main": MainScreen,
+        "explore": ExploreScreen,
+    }
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.word_count = 0
+
+    async def on_mount(self) -> None:
+        self.push_screen("main")
 
     async def action_quit(self) -> None:
         """Override parent App method. Ctrl+C can be captured."""

@@ -1,5 +1,3 @@
-import os
-
 import httpx
 from lxml import html
 from playsound import playsound
@@ -41,6 +39,7 @@ class Youdao:
             'frequency': self._parse_frequency(tree),
             'pronounce': self._parse_pronounce(tree),
             'explanation': self._parse_explanation(tree),
+            'additional': self._parse_additional(tree),
             'related': self._parse_related(tree),
             'phrases': self._parse_phrases(tree),
             'sentences': self._parse_sentences(tree),
@@ -57,7 +56,7 @@ class Youdao:
         if result.get('pronounce', None):
             if result.get('frequency', None):
                 res.append('  [yellow][b]' + result.get('word') + '  ' + result.get('frequency'))
-            res.append('  [green][not b]' + result['pronounce'])
+            res.append('  [green][not b]' + result['pronounce'].replace('[', '\['))
         if result.get('explanation', None):
             res.append('')
             for item in result['explanation']:
@@ -65,11 +64,17 @@ class Youdao:
         if result.get('additional', None):
             res.append('')
             for item in result['additional']:
+                item = '; '.join(['{}[yellow][b]{}[/][/]'.format(s.split()[0], s.split()[1])
+                                  for s in item.split(';')])
                 res.append('  [green][not b]' + item)
         if result.get('related', None):
             res.append('')
             for item in result['related']:
-                res.append('  [green][not b]' + item)
+                word, trans = item.split(' ', 1)
+                if '词根' in word:
+                    res.append('  [green][not b]' + word + ' [yellow][b]' + trans)
+                else:
+                    res.append('  [yellow][b]' + word + ' [green][not b]' + trans)
         if result.get('phrases', None):
             res.append('')
             for item in result['phrases']:
@@ -78,8 +83,8 @@ class Youdao:
         if result.get('sentences', None):
             res.append('')
             for item in result['sentences']:
-                res.append('  [green][not b]' + item['orig'])
-                res.append('  [blue][not b]' + item['trans'])
+                res.append('  [magenta][not b]' + item['orig'])
+                res.append('  [green][not b]' + item['trans'])
         if result.get('trans', None):
             res.append('')
             for item in result['trans']:
@@ -175,9 +180,8 @@ class Youdao:
 
     @classmethod
     def play_voice(cls, word: str, block: bool = False) -> str:
-        if os.environ.get("TDICT_VOICE_ENABLE", "0").lower() in ("true", "1",):
-            url = 'https://dict.youdao.com/dictvoice?audio={}&type=2'.format(word)
-            playsound(url, block)
+        url = 'https://dict.youdao.com/dictvoice?audio={}&type=2'.format(word)
+        playsound(url, block)
 
 
 youdao = Youdao()

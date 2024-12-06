@@ -1,6 +1,6 @@
 import httpx
 from lxml import html
-from playsound import playsound
+from playsound3 import playsound
 
 
 default_headers = {
@@ -181,6 +181,7 @@ class Youdao:
     @classmethod
     def play_voice(cls, word: str, block: bool = False) -> str:
         url = 'https://dict.youdao.com/dictvoice?audio={}&type=2'.format(word)
+        url = url.replace(" ", "%20")
         playsound(url, block)
 
 

@@ -37,7 +37,8 @@ class ReviewHistory(Base):
     __tablename__ = "review_history"
 
     date = Column(Date, default=datetime.date.today(), primary_key=True)
-    word_count = Column(Integer, default=0)
+    total_master = Column(Integer, default=0)
+    total_forget = Column(Integer, default=0)
 
 
 Base.metadata.create_all(engine)

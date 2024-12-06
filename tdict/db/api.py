@@ -73,14 +73,16 @@ def forget_word(word: str) -> None:
         word.schedule_day = _schedule_day()
 
 
-def append_review_history(word_count: int):
+def append_review_history(total_master: int, total_forget: int):
     today = date.today()
     with Session.begin() as session:
         history = session.query(ReviewHistory).get(today)
         if history:
-            history.word_count += word_count
+            history.total_master += total_master
+            history.total_forget += total_forget
         else:
-            session.add(ReviewHistory(date=today, word_count=word_count))
+            session.add(ReviewHistory(date=today, total_master=total_master,
+                                      total_forget=total_forget))
 
 
 def list_review_history(year: int|None = None) -> dict:
@@ -93,7 +95,7 @@ def list_review_history(year: int|None = None) -> dict:
             first_day = last_day - timedelta(days=last_day.weekday() + 52 * 7)
 
         data = {
-            r.date: r.word_count for r in session.query(ReviewHistory).\
+            r.date: r.total_master + r.total_forget for r in session.query(ReviewHistory).\
                     filter(func.DATE(ReviewHistory.date) >= first_day).\
                     filter(func.DATE(ReviewHistory.date) <= last_day)
         }

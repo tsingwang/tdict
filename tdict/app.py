@@ -28,6 +28,7 @@ class ExploreScreen(Screen):
         if event.value:
             explanation = await youdao.query(event.value)
             self.query_one("#result").update(youdao.format(explanation))
+            youdao.play_voice(event.value)
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         word = self.query_one("#search").value.strip()
@@ -118,6 +119,8 @@ class MainScreen(Screen):
         self.word_generator = db_api.list_today_words()
         self.word = None
         self.explanation = None
+        self.total_master = 0
+        self.total_forget = 0
         await self.next_word()
 
     @work
@@ -128,10 +131,12 @@ class MainScreen(Screen):
         if event.button.id == "yes":
             if await self.app.push_screen_wait(SpellScreen(self.word["word"])):
                 db_api.master_word(self.word["word"])
+                self.total_master += 1
             else:
                 return
         elif event.button.id == "no":
             db_api.forget_word(self.word["word"])
+            self.total_forget += 1
 
         await self.app.push_screen_wait(DetailScreen(self.explanation))
         await self.next_word()
@@ -139,11 +144,17 @@ class MainScreen(Screen):
     async def next_word(self) -> None:
         try:
             self.word = next(self.word_generator)
-            self.app.word_count += 1
         except StopIteration:
             self.word = None
-            self.query_one("#word").update("Well done! Hope to see you tomorrow :)")
-            self.query_one("#stats").update("")
+            if self.total_master + self.total_forget == 0:
+                self.query_one("#word").update("No schedule today, please add word.")
+                return
+            self.query_one("#word").update("Well done! See you tomorrow :)")
+            summary = "Accuracy: {}/{} = {:.2f}%".format(
+                self.total_master, self.total_master + self.total_forget,
+                100 * self.total_master / (self.total_master + self.total_forget)
+            )
+            self.query_one("#stats").update(summary)
             return
 
         self.explanation = await youdao.query(self.word["word"])
@@ -170,6 +181,9 @@ class MainScreen(Screen):
         if self.word is not None:
             youdao.play_voice(self.word["word"])
 
+    async def action_quit(self) -> None:
+        db_api.append_review_history(self.total_master, self.total_forget)
+
 
 class TDictApp(App):
 
@@ -182,14 +196,10 @@ class TDictApp(App):
         "explore": ExploreScreen,
     }
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.word_count = 0
-
     async def on_mount(self) -> None:
         self.push_screen("main")
 
     async def action_quit(self) -> None:
         """Override parent App method. Ctrl+C can be captured."""
-        db_api.append_review_history(self.word_count)
+        await self.children[0].action_quit()
         self.exit()

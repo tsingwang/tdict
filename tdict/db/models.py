@@ -40,5 +40,8 @@ class ReviewHistory(Base):
     total_master = Column(Integer, default=0)
     total_forget = Column(Integer, default=0)
 
+    def to_dict(self):
+        return dict([(k, v) for k, v in self.__dict__.items() if k[0] != '_'])
+
 
 Base.metadata.create_all(engine)

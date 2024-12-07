@@ -73,16 +73,22 @@ def forget_word(word: str) -> None:
         word.schedule_day = _schedule_day()
 
 
-def append_review_history(total_master: int, total_forget: int):
+def update_review_history(total_master: int, total_forget: int):
     today = date.today()
     with Session.begin() as session:
         history = session.query(ReviewHistory).get(today)
         if history:
-            history.total_master += total_master
-            history.total_forget += total_forget
+            history.total_master = total_master
+            history.total_forget = total_forget
         else:
             session.add(ReviewHistory(date=today, total_master=total_master,
                                       total_forget=total_forget))
+
+
+def get_review_history(date: date = date.today()) -> dict:
+    with Session.begin() as session:
+        r = session.query(ReviewHistory).get(date)
+        return r.to_dict() if r else None
 
 
 def list_review_history(year: int|None = None) -> dict:
@@ -95,18 +101,19 @@ def list_review_history(year: int|None = None) -> dict:
             first_day = last_day - timedelta(days=last_day.weekday() + 52 * 7)
 
         data = {
-            r.date: r.total_master + r.total_forget for r in session.query(ReviewHistory).\
-                    filter(func.DATE(ReviewHistory.date) >= first_day).\
-                    filter(func.DATE(ReviewHistory.date) <= last_day)
+            r.date: {"total_master": r.total_master,
+                     "total_forget": r.total_forget} \
+                for r in session.query(ReviewHistory).\
+                filter(func.DATE(ReviewHistory.date) >= first_day).\
+                filter(func.DATE(ReviewHistory.date) <= last_day)
         }
 
-        res = {}
         while first_day <= last_day:
-            res[first_day] = 0
+            if first_day not in data:
+                data[first_day] = {"total_master": 0, "total_forget": 0}
             first_day += timedelta(days=1)
 
-        res.update(data)
-        return res
+        return {k: v for k, v in sorted(data.items())}
 
 
 def get_review_schedule() -> list:

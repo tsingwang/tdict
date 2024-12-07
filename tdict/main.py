@@ -22,7 +22,7 @@ async def query_word(word: str) -> None:
             w["review_count"], w["forget_count"]))
 
 
-def print_word_list(offset: int = 0, limit: int = 20) -> None:
+def print_word_list(offset: int = 0, limit: int = 100) -> None:
     table = Table(box=None)
     table.add_column("SCHEDULE", justify="right")
     table.add_column("WORD", justify="right", style="green bold")
@@ -40,13 +40,14 @@ def show_review_history(year: int|None) -> None:
     total_days, reviewed_days, reviewed_words = 0, 0, 0
     lines = [[] for i in range(7)]
     n = 0
-    for first, last, (date, word_count) in loop_first_last(
+    for first, last, (date, v) in loop_first_last(
             db_api.list_review_history(year).items()):
         if first:
             while n < date.weekday():
                 lines[n].append("~~")
                 n += 1
 
+        word_count = v.get("total_master", 0) + v.get("total_forget", 0)
         total_days += 1
         if word_count > 0:
             reviewed_days += 1
@@ -87,7 +88,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("word", nargs='?', help="The word to query.")
     parser.add_argument("-u", dest="user", help="Use the user account.")
-    parser.add_argument("-l", dest="list", nargs='?', const="0,20", help="List words.")
+    parser.add_argument("-l", dest="list", nargs='?', const="0,40", help="List words.")
     parser.add_argument("-a", dest="add", help="Add word.")
     parser.add_argument("-d", dest="delete", help="Delete word.")
     parser.add_argument("-s", "--summary", action="store_true", help="Summary.")

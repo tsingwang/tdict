@@ -119,8 +119,9 @@ class MainScreen(Screen):
         self.word_generator = db_api.list_today_words()
         self.word = None
         self.explanation = None
-        self.total_master = 0
-        self.total_forget = 0
+        r = db_api.get_review_history()
+        self.total_master = r.get("total_master", 0) if r else 0
+        self.total_forget = r.get("total_forget", 0) if r else 0
         await self.next_word()
 
     @work
@@ -145,17 +146,13 @@ class MainScreen(Screen):
         try:
             self.word = next(self.word_generator)
         except StopIteration:
-            self.word = None
-            if self.total_master + self.total_forget == 0:
-                self.query_one("#word").update("No schedule today, please add word.")
-                return
-            self.query_one("#word").update("Well done! See you tomorrow :)")
-            summary = "Accuracy: {}/{} = {:.2f}%".format(
-                self.total_master, self.total_master + self.total_forget,
-                100 * self.total_master / (self.total_master + self.total_forget)
-            )
-            self.query_one("#stats").update(summary)
-            return
+            # Refresh today word list
+            self.word_generator = db_api.list_today_words()
+            try:
+                self.word = next(self.word_generator)
+            except StopIteration:
+                self.word = None
+                return self.show_today_summary()
 
         self.explanation = await youdao.query(self.word["word"])
         if len(self.explanation.get('explanation', [])) > 0:
@@ -172,6 +169,17 @@ class MainScreen(Screen):
 
         youdao.play_voice(self.word["word"])
 
+    def show_today_summary(self) -> None:
+        if self.total_master + self.total_forget == 0:
+            self.query_one("#word").update("No schedule today, please add word.")
+            return
+        self.query_one("#word").update("Well done! See you tomorrow :)")
+        summary = "Accuracy: {}/{} = {:.2f}%".format(
+            self.total_master, self.total_master + self.total_forget,
+            100 * self.total_master / (self.total_master + self.total_forget)
+        )
+        self.query_one("#stats").update(summary)
+
     async def action_delete_word(self) -> None:
         if self.word is not None:
             db_api.delete_word(self.word["word"])
@@ -182,7 +190,7 @@ class MainScreen(Screen):
             youdao.play_voice(self.word["word"])
 
     async def action_quit(self) -> None:
-        db_api.append_review_history(self.total_master, self.total_forget)
+        db_api.update_review_history(self.total_master, self.total_forget)
 
 
 class TDictApp(App):
@@ -201,5 +209,5 @@ class TDictApp(App):
 
     async def action_quit(self) -> None:
         """Override parent App method. Ctrl+C can be captured."""
-        await self.children[0].action_quit()
+        await self.get_screen("main").action_quit()
         self.exit()

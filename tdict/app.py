@@ -1,5 +1,7 @@
 from datetime import date
 
+import click
+from rich.markdown import Markdown
 from textual import events, work
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Grid
@@ -73,26 +75,39 @@ class DetailScreen(Screen):
         ("e", "app.push_screen('explore')", "Explore"),
         ("d", "delete_word", "Delete"),
         ("p", "play_voice", "Pronounce"),
+        ("n", "note", "Note"),
         ("enter", "next_word", "Enter"),
     ]
 
-    def __init__(self, explanation: dict) -> None:
+    def __init__(self, word: dict, explanation: dict) -> None:
         super().__init__()
+        self.word = word
         self.explanation = explanation
 
     def compose(self) -> ComposeResult:
-        yield Static(self.explanation["word"], id="title")
-        yield Static(youdao.format(self.explanation))
+        yield Static(self.word["word"], id="title")
+        yield Grid(Static(youdao.format(self.explanation), id="explanation"),
+                   Static(Markdown(self.word["note"]), id="note"))
         yield Footer()
 
     async def on_mount(self) -> None:
-        youdao.play_voice(self.explanation["word"])
+        youdao.play_voice(self.word["word"])
 
     async def action_delete_word(self) -> None:
-        db_api.delete_word(self.explanation["word"])
+        db_api.delete_word(self.word["word"])
+        self.dismiss(True)
 
     async def action_play_voice(self) -> None:
-        youdao.play_voice(self.explanation["word"])
+        youdao.play_voice(self.word["word"])
+
+    async def action_note(self) -> None:
+        self.app._driver.stop_application_mode()
+        note = click.edit(self.word["note"])
+        self.app._driver.start_application_mode()
+        if note is not None:
+            db_api.update_note(self.word["word"], note)
+            self.word["note"] = note
+            self.query_one("#note").update(Markdown(note))
 
     async def action_next_word(self) -> None:
         self.dismiss(True)
@@ -138,8 +153,9 @@ class MainScreen(Screen):
         elif event.button.id == "no":
             db_api.forget_word(self.word["word"])
             self.total_forget += 1
+            self.query_one("#yes").focus()
 
-        await self.app.push_screen_wait(DetailScreen(self.explanation))
+        await self.app.push_screen_wait(DetailScreen(self.word, self.explanation))
         await self.next_word()
 
     async def next_word(self) -> None:

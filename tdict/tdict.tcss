@@ -25,14 +25,23 @@ Button {
 DetailScreen {
     layout: vertical;
 }
-DetailScreen > #title {
+DetailScreen #title {
     padding-left: 2;
     text-style: bold;
 }
-DetailScreen > Static {
+DetailScreen Static {
     border: solid #808080;
 }
-
+DetailScreen Grid Static {
+    border: solid #808080;
+}
+DetailScreen Grid {
+    grid-size: 4 1;
+    grid-gutter: 1;
+}
+DetailScreen Grid #explanation {
+    column-span: 3;
+}
 
 SpellScreen {
     align: center middle;

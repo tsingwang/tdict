@@ -73,6 +73,13 @@ def forget_word(word: str) -> None:
         word.schedule_day = _schedule_day()
 
 
+def update_note(word: str, note: str) -> None:
+    with Session.begin() as session:
+        word = session.query(Word).get(word)
+        if word:
+            word.note = note
+
+
 def update_review_history(total_master: int, total_forget: int):
     today = date.today()
     with Session.begin() as session:

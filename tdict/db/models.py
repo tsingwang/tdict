@@ -20,7 +20,7 @@ class Word(Base):
     __tablename__ = "words"
 
     word = Column(String(256), primary_key=True)
-    tips = Column(String(1024), default='')     # reserved field
+    note = Column(String(1024), default='')
     review_count = Column(Integer, default=0)
     master_count = Column(Integer, default=0)   # Continuous mastery
     forget_count = Column(Integer, default=0)

@@ -23,6 +23,7 @@ setup(
         ],
     },
     install_requires=[
+        "click",
         "httpx",
         "lxml",
         "cssselect",

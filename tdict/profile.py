@@ -14,11 +14,21 @@ class Profile:
     def current_user(self):
         return self.read('USER')
 
+    @current_user.setter
+    def current_user(self, user: str):
+        self.update('USER', user)
+
     @property
     def db_path(self):
         if self.read('USER'):
             return Path.home().joinpath(".tdict/{}.sqlite3".format(self.read('USER')))
         return Path.home().joinpath(".tdict/tdict.sqlite3")
+
+    @property
+    def schedule_days(self):
+        if self.read('SCHEDULE_DAYS'):
+            return [int(d) for d in self.read('SCHEDULE_DAYS').split(',')]
+        return [0, 1, 3, 7, 14, 30, 90, 180, 360]
 
     def read(self, keyword, default=""):
         with open(self.filepath) as f:

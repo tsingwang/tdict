@@ -3,7 +3,8 @@ from typing import Iterator
 
 from sqlalchemy import func
 
-from .models import Session, Word, ReviewHistory, SCHEDULE_DAYS
+from .models import Session, Word, ReviewHistory
+from ..profile import profile
 
 
 def list_words(order: str = "schedule_day",
@@ -56,9 +57,9 @@ def master_word(word: str) -> None:
 
         word.review_count += 1
         word.master_count += 1
-        i = min(word.master_count, len(SCHEDULE_DAYS) - 1)
+        i = min(word.master_count, len(profile.schedule_days) - 1)
         word.schedule_day = _schedule_day(
-                date.today() + timedelta(days=SCHEDULE_DAYS[i]))
+                date.today() + timedelta(days=profile.schedule_days[i]))
 
 
 def forget_word(word: str) -> None:

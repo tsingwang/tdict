@@ -96,7 +96,7 @@ def main():
     args = parser.parse_args()
 
     if args.user:
-        profile.update('USER', args.user)
+        profile.current_user = args.user
     elif args.list:
         try:
             offset, limit = args.list.split(',')

@@ -20,15 +20,16 @@ class Profile:
 
     @property
     def db_path(self):
-        if self.read('USER'):
-            return Path.home().joinpath(".tdict/{}.sqlite3".format(self.read('USER')))
-        return Path.home().joinpath(".tdict/tdict.sqlite3")
+        return Path.home().joinpath(".tdict/{}.sqlite3".format(self.read('USER', 'tdict')))
 
     @property
     def schedule_days(self):
-        if self.read('SCHEDULE_DAYS'):
-            return [int(d) for d in self.read('SCHEDULE_DAYS').split(',')]
-        return [0, 1, 3, 7, 14, 30, 90, 180, 360]
+        default = '0,1,3,7,14,30,90,180,360'
+        return [int(d) for d in self.read('SCHEDULE_DAYS', default).split(',')]
+
+    @property
+    def max_daily_words(self):
+        return int(self.read('MAX_DAILY_WORDS', 20))
 
     def read(self, keyword, default=""):
         with open(self.filepath) as f:

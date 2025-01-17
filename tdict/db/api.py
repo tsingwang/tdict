@@ -8,7 +8,7 @@ from ..profile import profile
 
 
 def list_words(order: str = "schedule_day",
-               offset: int = 0, limit: int = 20) -> Iterator[dict]:
+               offset: int = 0, limit: int = 50) -> Iterator[dict]:
     with Session.begin() as session:
         for w in session.query(Word).order_by(order).offset(offset).limit(limit):
             yield w.to_dict()
@@ -29,10 +29,11 @@ def query_word(word: str) -> None:
 
 
 def _schedule_day(day: date = None) -> date:
-    """Limit 20 words every day, for schedule balance."""
+    """Limit daily words, for schedule balance."""
     day = day if day is not None else date.today()
     with Session.begin() as session:
-        while session.query(Word).filter_by(schedule_day=day).count() >= 20:
+        while session.query(Word).filter_by(
+                schedule_day=day).count() >= profile.max_daily_words:
             day += timedelta(days=1)
     return day
 

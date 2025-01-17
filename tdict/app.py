@@ -27,10 +27,14 @@ class ExploreScreen(Screen):
         self.query_one(Input).focus()
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
-        if event.value:
-            explanation = await youdao.query(event.value)
-            self.query_one("#result").update(youdao.format(explanation))
-            youdao.play_voice(event.value)
+        word = event.value.strip()
+        if word:
+            w = db_api.query_word(word)
+            result = "  REVIEW: {}  MASTER: {}  FORGET: {}\n".format(
+                w["review_count"], w["master_count"], w["forget_count"]) if w else ''
+            result += youdao.format(await youdao.query(word))
+            self.query_one("#result").update(result)
+            youdao.play_voice(word)
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         word = self.query_one("#search").value.strip()
@@ -73,7 +77,7 @@ class DetailScreen(Screen):
 
     BINDINGS = [
         ("e", "app.push_screen('explore')", "Explore"),
-        ("d", "delete_word", "Delete"),
+        ("D", "delete_word", "Delete"),
         ("p", "play_voice", "Pronounce"),
         ("n", "note", "Note"),
         ("enter", "next_word", "Enter"),
@@ -117,7 +121,7 @@ class MainScreen(Screen):
 
     BINDINGS = [
         ("e", "app.push_screen('explore')", "Explore"),
-        ("d", "delete_word", "Delete"),
+        ("D", "delete_word", "Delete"),
         ("p", "play_voice", "Pronounce"),
     ]
 

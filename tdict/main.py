@@ -88,7 +88,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("word", nargs='?', help="The word to query.")
     parser.add_argument("-u", dest="user", help="Use the user account.")
-    parser.add_argument("-l", dest="list", nargs='?', const="0,40", help="List words.")
+    parser.add_argument("-l", dest="list", nargs='?', const="0,50", help="List words.")
     parser.add_argument("-a", dest="add", help="Add word.")
     parser.add_argument("-d", dest="delete", help="Delete word.")
     parser.add_argument("-s", "--summary", action="store_true", help="Summary.")

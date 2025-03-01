@@ -61,10 +61,12 @@ class SpellScreen(ModalScreen):
         self.query_one(Input).focus()
 
     async def on_input_changed(self, message: Input.Changed) -> None:
-        if self.word.lower().startswith(message.value.lower()):
-            self.query_one(Input).styles.color = "green"
-        else:
-            self.query_one(Input).styles.color = "red"
+        # NOTE: Prevent my child from trying with the prompts
+        #if self.word.lower().startswith(message.value.lower()):
+        #    self.query_one(Input).styles.color = "green"
+        #else:
+        #    self.query_one(Input).styles.color = "red"
+        self.query_one(Input).styles.color = "green"
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         if self.word.lower() == event.value.lower():

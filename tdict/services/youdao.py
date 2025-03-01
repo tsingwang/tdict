@@ -1,6 +1,7 @@
 import httpx
 from lxml import html
 from playsound3 import playsound
+from tenacity import retry, wait_random
 
 
 default_headers = {
@@ -27,6 +28,7 @@ class Youdao:
         # Without this, there will be a ResourceWarning
         await self.session.aclose()
 
+    @retry(wait=wait_random(min=1, max=5))
     async def query(self, word: str) -> dict:
         url = 'https://dict.youdao.com/w/' + word
         r = await self.session.get(url, headers=default_headers)

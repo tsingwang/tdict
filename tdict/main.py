@@ -91,8 +91,7 @@ def main():
     parser.add_argument("-l", dest="list", nargs='?', const="0,50", help="List words.")
     parser.add_argument("-a", dest="add", help="Add word.")
     parser.add_argument("-d", dest="delete", help="Delete word.")
-    parser.add_argument("-s", "--summary", action="store_true", help="Summary.")
-    parser.add_argument("-y", dest="year", type=int, help="Depend on summary.")
+    parser.add_argument("-s", dest="year", type=int, nargs='?', const=1, help="Summary by year.")
     args = parser.parse_args()
 
     if args.user:
@@ -110,8 +109,9 @@ def main():
     elif args.word:
         asyncio.run(query_word(args.word))
         Youdao.play_voice(args.word, block=True)
-    elif args.summary:
-        show_review_history(args.year)
+    elif args.year:
+        year = args.year if args.year > 1 else None
+        show_review_history(year)
         show_review_schedule()
     else:
         TDictApp().run()

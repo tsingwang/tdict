@@ -29,6 +29,7 @@ setup(
         "cssselect",
         "SQLAlchemy",
         "rich",
+        "tenacity",
         "textual",
         "playsound3",
     ],

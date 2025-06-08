@@ -54,6 +54,7 @@ SpellScreen > Input {
 
 ExploreScreen {
     layout: vertical;
+    padding: 2;
 }
 ExploreScreen Grid {
     height: 4;

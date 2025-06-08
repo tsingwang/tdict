@@ -178,15 +178,17 @@ class MainScreen(Screen):
 
         self.explanation = await youdao.query(self.word["word"])
         if len(self.explanation.get('explanation', [])) > 0:
-            tips = '\n'.join(self.explanation['explanation'])
+            tips = '\n'.join(self.explanation['explanation']).\
+                    replace(self.word["word"], '').replace(self.word["word"].capitalize(), '')
             self.query_one("#word").update('[green]' + tips)
         elif len(self.explanation.get('trans', [])) > 1:
             self.query_one("#word").update('[green]' + self.explanation['trans'][1])
         else:
             self.query_one("#word").update(self.word["word"])
 
-        stats = "MASTER: {}  FORGET: {}".format(self.word["master_count"],
-                                                self.word["forget_count"])
+        stats = "REVIEW: {}  MASTER: {}  FORGET: {}".format(
+                self.word["review_count"], self.word["master_count"],
+                self.word["forget_count"])
         self.query_one("#stats").update(stats)
 
         youdao.play_voice(self.word["word"])

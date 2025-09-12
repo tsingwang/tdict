@@ -29,6 +29,10 @@ DetailScreen #title {
     padding-left: 2;
     text-style: bold;
 }
+DetailScreen #note {
+    padding-left: 2;
+    color: #B0B0B0;
+}
 DetailScreen Static {
     border: solid #808080;
 }
@@ -66,4 +70,8 @@ ExploreScreen Grid Input {
 }
 ExploreScreen Grid Button {
     column-span: 2;
+}
+ExploreScreen #note {
+    padding-left: 2;
+    color: #B0B0B0;
 }

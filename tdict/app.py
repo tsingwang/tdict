@@ -15,11 +15,15 @@ from .services import youdao
 
 class ExploreScreen(Screen):
 
-    BINDINGS = [("escape", "app.pop_screen", "Pop screen")]
+    BINDINGS = [
+        ("escape", "app.pop_screen", "Pop screen"),
+        ("n", "note", "Note"),
+    ]
 
     def compose(self) -> ComposeResult:
         yield Grid(Input(placeholder="Search", id="search"),
                    Button("Add", id="add", variant="success"))
+        yield Static(id="note")
         yield Static(id="result")
         yield Footer()
 
@@ -30,9 +34,14 @@ class ExploreScreen(Screen):
         word = event.value.strip()
         if word:
             w = db_api.query_word(word)
-            result = "  REVIEW: {}  MASTER: {}  FORGET: {}\n".format(
-                w["review_count"], w["master_count"], w["forget_count"]) if w else ''
-            result += youdao.format(await youdao.query(word))
+            if w:
+                stats = "  REVIEW: {}  MASTER: {}  FORGET: {}\n".format(
+                    w["review_count"], w["master_count"], w["forget_count"])
+                self.query_one("#note").update(Markdown('\n\n'.join([stats, w["note"]])))
+            else:
+                self.query_one("#note").update("")
+
+            result = youdao.format(await youdao.query(word))
             self.query_one("#result").update(result)
             youdao.play_voice(word)
 
@@ -44,6 +53,24 @@ class ExploreScreen(Screen):
             db_api.add_word(word)
             self.query_one("#search").value = ""
             self.query_one("#search").focus()
+
+    async def action_note(self) -> None:
+        word = self.query_one("#search").value.strip()
+        if not word:
+            return
+
+        w = db_api.query_word(word)
+        if not w:
+            return
+
+        self.app._driver.stop_application_mode()
+        note = click.edit(w["note"])
+        self.app._driver.start_application_mode()
+        if note is not None:
+            db_api.update_note(word, note)
+            stats = "  REVIEW: {}  MASTER: {}  FORGET: {}\n".format(
+                w["review_count"], w["master_count"], w["forget_count"])
+            self.query_one("#note").update(Markdown('\n\n'.join([stats, note])))
 
 
 class SpellScreen(ModalScreen):
@@ -92,8 +119,10 @@ class DetailScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Static(self.word["word"], id="title")
-        yield Grid(Static(youdao.format(self.explanation), id="explanation"),
-                   Static(Markdown(self.word["note"]), id="note"))
+        #yield Grid(Static(youdao.format(self.explanation), id="explanation"),
+        #           Static(Markdown(self.word["note"]), id="note"))
+        yield Static(Markdown(self.word["note"]), id="note")
+        yield Static(youdao.format(self.explanation), id="explanation")
         yield Footer()
 
     async def on_mount(self) -> None:
@@ -227,6 +256,10 @@ class TDictApp(App):
         "main": MainScreen,
         "explore": ExploreScreen,
     }
+
+    BINDINGS = [
+        ("ctrl+c", "quit", "Quit")
+    ]
 
     async def on_mount(self) -> None:
         self.push_screen("main")

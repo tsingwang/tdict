@@ -30,7 +30,7 @@ setup(
         "SQLAlchemy",
         "rich",
         "tenacity",
-        "textual",
+        "textual==1.0.0",
         "playsound3",
     ],
     classifiers=[

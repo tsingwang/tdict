@@ -92,6 +92,7 @@ def main():
     parser.add_argument("-a", dest="add", help="Add word.")
     parser.add_argument("-d", dest="delete", help="Delete word.")
     parser.add_argument("-s", dest="year", type=int, nargs='?', const=1, help="Summary by year.")
+    parser.add_argument("--serve", dest="ip", help="Serve app on <IP>")
     args = parser.parse_args()
 
     if args.user:
@@ -113,6 +114,10 @@ def main():
         year = args.year if args.year > 1 else None
         show_review_history(year)
         show_review_schedule()
+    elif args.ip:
+        from textual_serve.server import Server
+        server = Server("td", args.ip)
+        server.serve()
     else:
         TDictApp().run()
 

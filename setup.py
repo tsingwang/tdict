@@ -31,6 +31,7 @@ setup(
         "rich",
         "tenacity",
         "textual==1.0.0",
+        "textual-serve",
         "playsound3",
     ],
     classifiers=[

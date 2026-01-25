@@ -1,8 +1,8 @@
-from datetime import date
+import os
 
 import click
 from rich.markdown import Markdown
-from textual import events, work
+from textual import work
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Grid
 from textual.screen import Screen, ModalScreen
@@ -51,8 +51,12 @@ class ExploreScreen(Screen):
             return
         if event.button.id == "add":
             db_api.add_word(word)
-            self.query_one("#search").value = ""
-            self.query_one("#search").focus()
+            #self.query_one("#search").value = ""
+            #self.query_one("#search").focus()
+            w = db_api.query_word(word)
+            stats = "  REVIEW: {}  MASTER: {}  FORGET: {}\n".format(
+                w["review_count"], w["master_count"], w["forget_count"])
+            self.query_one("#note").update(Markdown('\n\n'.join([stats, w["note"]])))
 
     async def action_note(self) -> None:
         word = self.query_one("#search").value.strip()
@@ -180,7 +184,10 @@ class MainScreen(Screen):
             return await self.app.action_quit()
 
         if event.button.id == "yes":
-            if await self.app.push_screen_wait(SpellScreen(self.word["word"])):
+            passed = True
+            if os.environ.get("TDICT_SPELL_ENABLE", "0").lower() in ("true", "1",):
+                passed = await self.app.push_screen_wait(SpellScreen(self.word["word"]))
+            if passed:
                 db_api.master_word(self.word["word"])
                 self.total_master += 1
             else:
@@ -220,7 +227,8 @@ class MainScreen(Screen):
                 self.word["forget_count"])
         self.query_one("#stats").update(stats)
 
-        youdao.play_voice(self.word["word"])
+        if os.environ.get("TDICT_AUTO_VOICE", "0").lower() in ("true", "1",):
+            youdao.play_voice(self.word["word"])
 
     def show_today_summary(self) -> None:
         if self.total_master + self.total_forget == 0:

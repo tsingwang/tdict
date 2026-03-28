@@ -71,8 +71,12 @@ def forget_word(word: str) -> None:
 
         word.review_count += 1
         word.forget_count += 1
-        word.master_count = 0
-        word.schedule_day = _schedule_day()
+        #word.master_count = 0
+        #word.schedule_day = _schedule_day()
+        word.master_count = round(word.master_count / 1.25)
+        i = min(word.master_count, len(profile.schedule_days) - 1)
+        word.schedule_day = _schedule_day(
+                date.today() + timedelta(days=profile.schedule_days[i]))
 
 
 def update_note(word: str, note: str) -> None:
